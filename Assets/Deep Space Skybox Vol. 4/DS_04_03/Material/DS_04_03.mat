@@ -47,7 +47,9 @@ Material:
         m_Texture: {fileID: 2800000, guid: b2cb174ba9abd0c4aa2b1f7deec9e650, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    m_Floats: []
+    m_Floats:
+    - _Exposure: 1
+    - _Rotation: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _Tint: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}
+    - _Tint: {r: 0.39215687, g: 0.39215687, b: 0.39215687, a: 0.49803922}
