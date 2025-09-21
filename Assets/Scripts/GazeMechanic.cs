@@ -36,8 +36,8 @@ public class GazeMechanic : MonoBehaviour
             }
         }
 
-        if (currentTarget != null)
-        {
+        if (currentTarget != null) {
+            
             currentTarget.OnLookAway();
             currentTarget = null;
         }
