@@ -5,7 +5,7 @@ public class SimpleFireTutorial : MonoBehaviour
 {
     [Header("Tutorial UI")]
     public Text tutorialText;
-    public float displayTime = 8f;
+    public float displayTime = 15f;
     public bool showOnStart = true;
     
     [Header("VR Instructions")]

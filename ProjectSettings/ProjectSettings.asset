@@ -405,6 +405,8 @@ PlayerSettings:
     m_Devices:
     - Oculus
     - daydream
+    - MockHMD
+    - None
   m_BuildTargetEnableVuforiaSettings: []
   openGLRequireES31: 0
   openGLRequireES31AEP: 0
