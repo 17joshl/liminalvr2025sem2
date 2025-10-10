@@ -1,11 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
-
 public class FireGazePhases : MonoBehaviour
-
 {
     [Header("Look Target & Camera")]
     public Transform fireRoot;
@@ -15,20 +14,20 @@ public class FireGazePhases : MonoBehaviour
     [Range(0f, 30f)] public float centerDeadZoneDegrees = 8f;
 
     [Header("Phase Up Times (LOOKING)")]
-    public float phase1to2Time = 30f; // Phase1 to Phase2
-    public float phase2to3Time = 30f; // Phase2 to Phase3
+    public float phase1to2Time = 30f;
+    public float phase2to3Time = 30f;
 
     [Header("Phase Down Times (AWAY)")]
-    public float phase3to2Time = 30f; // Phase3 to Phase2
-    public float phase2to1Time = 30f; // Phase2 to Phase1
+    public float phase3to2Time = 30f;
+    public float phase2to1Time = 30f;
 
     [Header("Refs")]
     public FireSizeChanger fireController;
 
     [Header("UI")]
-    public Text messageText;   
-    public Text timerText;     
-    public Text phaseText;     
+    public Text messageText;
+    public Text timerText;
+    public Text phaseText;
     public bool showTimer = true;
     public bool showPhase = true;
 
@@ -36,9 +35,88 @@ public class FireGazePhases : MonoBehaviour
     public bool alwaysLooking = false;
     public bool enableKeyboardShortcuts = true;
 
-    int currentPhase = 1; // 1=Fireball, 2=Small, 3=Big
+    int currentPhase = 1;
     float lookTimer = 0f;
     float awayTimer = 0f;
+
+    void Awake()
+    {
+        AutoAssign();
+    }
+
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            if (this == null) return;
+            AutoAssign();
+        };
+    }
+#endif
+
+    void AutoAssign()
+    {
+        if (!playerCamera)
+        {
+            playerCamera = Camera.main;
+            if (!playerCamera)
+            {
+                var cams = FindObjectsOfType<Camera>();
+                playerCamera = cams.FirstOrDefault(c => c.CompareTag("MainCamera"));
+                if (!playerCamera)
+                    playerCamera = cams.FirstOrDefault(c => c.name.ToLower().Contains("centereye") || c.name.ToLower().Contains("center eye"));
+                if (!playerCamera && cams.Length > 0) playerCamera = cams[0];
+            }
+        }
+
+        if (!fireController)
+            fireController = FindObjectOfType<FireSizeChanger>();
+
+        if (!fireRoot)
+        {
+            if (fireController) fireRoot = fireController.transform;
+            else
+            {
+                var all = FindObjectsOfType<Transform>();
+                fireRoot = all.FirstOrDefault(t =>
+                {
+                    var n = t.name.ToLower();
+                    return n.Contains("fireplaceholder") || n.Contains("fire place") || n.Contains("fireholder") || n == "fire" || n.Contains("campfire");
+                });
+            }
+        }
+
+        if (fireController && fireRoot == null) fireRoot = fireController.transform;
+
+        if (!messageText || !timerText || !phaseText)
+        {
+            var texts = FindObjectsOfType<Text>();
+
+            if (!messageText)
+            {
+                messageText = texts.FirstOrDefault(t =>
+                {
+                    var n = t.name.ToLower();
+                    return (n.Contains("message") || n.Contains("phases")) && !n.Contains("timer");
+                });
+            }
+
+            if (!timerText)
+            {
+                timerText = texts.FirstOrDefault(t => t.name.ToLower().Contains("timer"));
+            }
+
+            if (!phaseText)
+            {
+                phaseText = texts.FirstOrDefault(t =>
+                {
+                    var n = t.name.ToLower();
+                    return n.Contains("phase") && !n.Contains("message") && !n.Contains("timer");
+                });
+            }
+        }
+    }
 
     void Start()
     {
@@ -50,8 +128,7 @@ public class FireGazePhases : MonoBehaviour
     void Update()
     {
         if (!playerCamera || !fireRoot || !fireController) return;
-        
-        
+
         if (enableKeyboardShortcuts)
         {
             if (Input.GetKeyDown(KeyCode.Alpha1)) ForcePhase(1, "Manual: Phase 1 (Fireball)");
@@ -124,7 +201,8 @@ public class FireGazePhases : MonoBehaviour
     {
         currentPhase = Mathf.Clamp(phase, 1, 3);
         fireController.SetStageByNumber(currentPhase);
-        lookTimer = 0f; awayTimer = 0f;
+        lookTimer = 0f;
+        awayTimer = 0f;
         ShowMessage(msg);
     }
 
@@ -140,12 +218,13 @@ public class FireGazePhases : MonoBehaviour
         Debug.Log(msg);
     }
 
-    void ClearMessage() { if (messageText) messageText.text = ""; }
+    void ClearMessage()
+    {
+        if (messageText) messageText.text = "";
+    }
 
-    
     void UpdateInfoUI()
     {
-        
         if (timerText)
         {
             if (showTimer)
@@ -162,7 +241,6 @@ public class FireGazePhases : MonoBehaviour
             }
         }
 
-        
         if (phaseText)
         {
             if (showPhase)
