@@ -23,7 +23,8 @@ Material:
     m_Floats:
     - Vector1_1EEA4BEC: 1
     m_Colors:
-    - Color_C279F11C: {r: 14.807841, g: 5.1943736, b: 0.4651678, a: 0}
+    - Color_C279F11C: {r: 1.8509802, g: 0.6492967, b: 0.058145974, a: 0}
     - Vector2_7CF6C606: {r: 1, g: 1, b: 0, a: 0}
     - Vector2_BADE4807: {r: 1, g: 1, b: 0, a: 0}
+    - Vector2_C148B522: {r: 0.81, g: 0.21, b: 0, a: 0}
     - Vector2_CF66A375: {r: 1, g: 1, b: 0, a: 0}
