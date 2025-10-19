@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0014529466, g: 0.0012003651, b: 0.0059132027, a: 1}
+  m_IndirectSpecularColor: {r: 0.0014325179, g: 0.0012448281, b: 0.005824707, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -402,7 +402,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 283940019}
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: -0.7071068}
-  m_LocalPosition: {x: 0, y: -0.245, z: 0.5640001}
+  m_LocalPosition: {x: 0, y: -0.245, z: 0.88}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 683200854}
@@ -478,7 +478,7 @@ ParticleSystem:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 283940019}
   serializedVersion: 6
-  lengthInSec: 5
+  lengthInSec: 2
   simulationSpeed: 1
   stopAction: 0
   cullingMode: 0
@@ -1097,7 +1097,7 @@ ParticleSystem:
   ShapeModule:
     serializedVersion: 6
     enabled: 1
-    type: 10
+    type: 18
     angle: 25
     length: 5
     boxThickness: {x: 0, y: 0, z: 0}
@@ -1184,7 +1184,7 @@ ParticleSystem:
     sphericalDirectionAmount: 0
     randomPositionAmount: 0
     radius:
-      value: 0.1
+      value: 0.5
       mode: 0
       spread: 0
       speed:
@@ -6297,13 +6297,13 @@ MonoBehaviour:
   redFlames: {fileID: 1010616028}
   glowPS: {fileID: 283940022}
   glowRateP1: 8
-  glowRateP2: 18
+  glowRateP2: 24
   glowRateP3: 32
   glowSizeP1: 0.6
-  glowSizeP2: 0.9
-  glowSizeP3: 1.2
+  glowSizeP2: 3
+  glowSizeP3: 4
   glowAlphaP1: 0.6
-  glowAlphaP2: 1
+  glowAlphaP2: 0.8
   glowAlphaP3: 1.4
 --- !u!1 &657924556
 GameObject:
@@ -31673,8 +31673,8 @@ MonoBehaviour:
   messageText: {fileID: 0}
   timerText: {fileID: 1370527342}
   phaseText: {fileID: 553010585}
-  showTimer: 0
-  showPhase: 0
+  showTimer: 1
+  showPhase: 1
   alwaysLooking: 0
   enableKeyboardShortcuts: 0
 --- !u!1 &2016359082
