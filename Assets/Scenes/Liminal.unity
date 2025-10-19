@@ -7458,7 +7458,7 @@ GameObject:
   m_Component:
   - component: {fileID: 835298427}
   m_Layer: 0
-  m_Name: Rocks
+  m_Name: RockDecor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -34222,7 +34222,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 9.78048e-39, y: 4.1326e-40, z: 6.795827e-39, w: 9.1835e-41}
+  m_BoundingSphereOverride: {x: 2.4611916e-38, y: -6.9e-44, z: -6.9e-44, w: NaN}
   m_UseBoundingSphereOverride: 0
   m_ShadowRadius: 0
   m_ShadowAngle: 0
