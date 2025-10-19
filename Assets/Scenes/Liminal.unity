@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0014529466, g: 0.0012003651, b: 0.0059132027, a: 1}
+  m_IndirectSpecularColor: {r: 0.0014342217, g: 0.0012466515, b: 0.0058256323, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -154,7 +154,6 @@ Transform:
   - {fileID: 641830964}
   - {fileID: 2139373087}
   - {fileID: 2083880562}
-  - {fileID: 738016833}
   m_Father: {fileID: 1691384646}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -820,6 +819,11 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1691384646}
     m_Modifications:
+    - target: {fileID: 1260162970045296579, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_Name
+      value: VRAvatar
+      objectReference: {fileID: 0}
     - target: {fileID: 1260162969423114810, guid: 22276a8657744e04cba8ad0a2caf4195,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -874,11 +878,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1260162970045296579, guid: 22276a8657744e04cba8ad0a2caf4195,
-        type: 3}
-      propertyPath: m_Name
-      value: VRAvatar
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 22276a8657744e04cba8ad0a2caf4195, type: 3}
@@ -1523,6 +1522,7 @@ Transform:
   - {fileID: 1010616028}
   - {fileID: 1104772320}
   - {fileID: 1779720830}
+  - {fileID: 738016833}
   m_Father: {fileID: 42052306}
   m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6338,9 +6338,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41aaa04dc4d3b7c4aafc7b16d6ffc494, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fireball: {fileID: 0}
-  smallFire: {fileID: 0}
-  bigFlames: {fileID: 0}
+  phase1Objects: []
+  phase2Objects: []
+  phase3Objects: []
+  debugBinding: 0
 --- !u!4 &683200854 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8223331783523558113, guid: 0cf6233f508f46247988fea8eb22831f,
@@ -6608,7 +6609,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4910980365795886, guid: 2615bc74ec4399b4980789af8b90d7e2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4.97
+      value: -7.05
       objectReference: {fileID: 0}
     - target: {fileID: 4910980365795886, guid: 2615bc74ec4399b4980789af8b90d7e2, type: 3}
       propertyPath: m_LocalRotation.x
@@ -6628,7 +6629,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4910980365795886, guid: 2615bc74ec4399b4980789af8b90d7e2, type: 3}
       propertyPath: m_RootOrder
-      value: 7
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4910980365795886, guid: 2615bc74ec4399b4980789af8b90d7e2, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -26874,13 +26875,13 @@ MonoBehaviour:
     m_Bits: 4294967295
   maxRayDistance: 50
   centerDeadZoneDegrees: 8
-  gazeCollider: {fileID: 1146806258}
+  gazeCollider: {fileID: 0}
   sphereCastRadius: 0.5
   phase1to2Time: 30
   phase2to3Time: 30
   phase3to2Time: 30
   phase2to1Time: 30
-  fireController: {fileID: 641830965}
+  fireController: {fileID: 0}
   messageText: {fileID: 0}
   timerText: {fileID: 1370527342}
   phaseText: {fileID: 553010585}
