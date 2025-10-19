@@ -3,109 +3,178 @@ using UnityEngine;
 
 public class FireSizeChanger : MonoBehaviour
 {
-    public Transform[] phase1Objects; // StartingFire
-    public Transform[] phase2Objects; // StartingFire + Main/MainFire
-    public Transform[] phase3Objects; // Main/MainFire + SupportingFlames + RedFlames + StylizedFire1
-    public bool debugBinding = false;
+    
+    public Transform mainFireCore;             // Phase 1
+    public Transform stylizedBackingFlames;    // Phase 2
+    public Transform redFlames;                // Phase 3
+
+    // Glow particle 
+    public ParticleSystem glowPS;
+
+    // Glow settings per phase
+    [Header("Glow – Emission (rateOverTime)")]
+    public float glowRateP1 = 8f;
+    public float glowRateP2 = 18f;
+    public float glowRateP3 = 32f;
+
+    [Header("Glow – Start Size")]
+    public float glowSizeP1 = 0.6f;
+    public float glowSizeP2 = 0.9f;
+    public float glowSizeP3 = 1.2f;
+
+    [Header("Glow – Alpha Multiplier (keeps original color)")]
+    [Range(0f, 3f)] public float glowAlphaP1 = 0.6f;
+    [Range(0f, 3f)] public float glowAlphaP2 = 1.0f;
+    [Range(0f, 3f)] public float glowAlphaP3 = 1.4f;
+
+    
+    ParticleSystem.MinMaxGradient _originalGlowStartColor;
+    bool _haveOriginalColor;
 
     void Awake()
     {
         AutoBind();
+        CacheGlowColor();
         SetStageByNumber(1);
     }
 
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        if (!Application.isPlaying)
+        {
+            AutoBind();
+            CacheGlowColor();
+        }
+    }
+#endif
+
     void AutoBind()
     {
-        var all = GetComponentsInChildren<Transform>(true)
-                  .Where(t => t && t != transform).ToArray();
+        var all = GetComponentsInChildren<Transform>(true);
 
-        // helpers
-        System.Func<Transform, bool> isStarting =
-            t => t.name == "StartingFire" || t.name.ToLower().Replace(" ", "") == "startingfire";
+        if (!mainFireCore)
+            mainFireCore = all.FirstOrDefault(t => t.name == "MainFireCore");
+        if (!stylizedBackingFlames)
+            stylizedBackingFlames = all.FirstOrDefault(t => t.name == "StylizedBackingFlames");
+        if (!redFlames)
+            redFlames = all.FirstOrDefault(t => t.name == "RedFlames");
 
-        System.Func<Transform, bool> isMain =
-            t =>
-            {
-                var n = t.name.ToLower();
-                var ns = n.Replace(" ", "");
-                return t.name == "MainFire" || t.name == "Main" ||
-                       ns.Contains("mainfire") || n.Contains("main fire") || n == "main";
-            };
-
-        System.Func<Transform, bool> isPhase3Extra =
-            t =>
-            {
-                var n = t.name.ToLower();
-                return n == "supportingflames" || n == "redflames" || n == "stylizedfire1" ||
-                       n.Contains("supportingflames") || n.Contains("redflames") || n.Contains("stylizedfire");
-            };
-
-        // PHASE 1: StartingFire
-        if (phase1Objects == null || phase1Objects.Length == 0)
-            phase1Objects = all.Where(isStarting).ToArray();
-
-        // PHASE 2: StartingFire + Main/MainFire
-        if (phase2Objects == null || phase2Objects.Length == 0)
+        if (!glowPS && mainFireCore)
         {
-            var p2 = all.Where(isStarting).Concat(all.Where(isMain)).Distinct().ToArray();
-            phase2Objects = p2;
-        }
-
-        // PHASE 3: Main/MainFire + extras
-        if (phase3Objects == null || phase3Objects.Length == 0)
-        {
-            var p3 = all.Where(isMain).Concat(all.Where(isPhase3Extra)).Distinct().ToArray();
-            phase3Objects = p3;
-        }
-
-        // Exclude CampFire everywhere (base only)
-        phase1Objects = phase1Objects.Where(t => t && t.name != "CampFire").ToArray();
-        phase2Objects = phase2Objects.Where(t => t && t.name != "CampFire").ToArray();
-        phase3Objects = phase3Objects.Where(t => t && t.name != "CampFire").ToArray();
-
-        if (debugBinding)
-        {
-            Debug.Log("[FireSizeChanger] Phase1: " + string.Join(", ", phase1Objects.Select(t => t.name)));
-            Debug.Log("[FireSizeChanger] Phase2: " + string.Join(", ", phase2Objects.Select(t => t.name)));
-            Debug.Log("[FireSizeChanger] Phase3: " + string.Join(", ", phase3Objects.Select(t => t.name)));
+            
+            glowPS = mainFireCore.GetComponentsInChildren<ParticleSystem>(true)
+                                 .FirstOrDefault(p => p.gameObject.name == "Particle System")
+                     ?? mainFireCore.GetComponentInChildren<ParticleSystem>(true);
         }
     }
 
+    void CacheGlowColor()
+    {
+        _haveOriginalColor = false;
+        if (!glowPS) return;
+        _originalGlowStartColor = glowPS.main.startColor;
+        _haveOriginalColor = true;
+    }
+
+    
     public void SetStageByNumber(int phase)
     {
         phase = Mathf.Clamp(phase, 1, 3);
 
-        // turn EVERYTHING off first so phases don’t overlap unexpectedly
-        SetGroupActive(phase1Objects, false);
-        SetGroupActive(phase2Objects, false);
-        SetGroupActive(phase3Objects, false);
+        SetActive(mainFireCore, false);
+        SetActive(stylizedBackingFlames, false);
+        SetActive(redFlames, false);
 
-        if (phase == 1) SetGroupActive(phase1Objects, true);
-        else if (phase == 2) SetGroupActive(phase2Objects, true);
-        else SetGroupActive(phase3Objects, true);
+        if (phase >= 1) SetActive(mainFireCore, true);
+        if (phase >= 2) SetActive(stylizedBackingFlames, true);
+        if (phase >= 3) SetActive(redFlames, true);
+
+        ApplyGlow(phase);
     }
 
-    void SetGroupActive(Transform[] group, bool on)
+    
+
+    void SetActive(Transform t, bool on)
     {
-        if (group == null) return;
+        if (!t) return;
+        t.gameObject.SetActive(on);
 
-        for (int i = 0; i < group.Length; i++)
+        foreach (var r in t.GetComponentsInChildren<Renderer>(true))
+            r.enabled = on;
+
+        foreach (var ps in t.GetComponentsInChildren<ParticleSystem>(true))
         {
-            var t = group[i];
-            if (!t) continue;
-
-            t.gameObject.SetActive(on);
-
-            var rens = t.GetComponentsInChildren<Renderer>(true);
-            for (int r = 0; r < rens.Length; r++) rens[r].enabled = on;
-
-            var ps = t.GetComponentsInChildren<ParticleSystem>(true);
-            for (int p = 0; p < ps.Length; p++)
-            {
-                var e = ps[p].emission; e.enabled = on;
-                if (on && !ps[p].isPlaying) ps[p].Play(true);
-                else if (!on && ps[p].isPlaying) ps[p].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            }
+            var e = ps.emission; e.enabled = on;
+            if (on && !ps.isPlaying) ps.Play(true);
+            else if (!on && ps.isPlaying) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
+    }
+
+    void ApplyGlow(int phase)
+    {
+        if (!glowPS) return;
+
+        var main = glowPS.main;
+        var emission = glowPS.emission;
+
+        float rate, size, alphaMul;
+        if (phase == 1) { rate = glowRateP1; size = glowSizeP1; alphaMul = glowAlphaP1; }
+        else if (phase == 2) { rate = glowRateP2; size = glowSizeP2; alphaMul = glowAlphaP2; }
+        else { rate = glowRateP3; size = glowSizeP3; alphaMul = glowAlphaP3; }
+
+        emission.enabled = true;
+        emission.rateOverTime = new ParticleSystem.MinMaxCurve(rate);
+        main.startSize = new ParticleSystem.MinMaxCurve(size);
+
+        if (_haveOriginalColor)
+            main.startColor = MultiplyAlpha(_originalGlowStartColor, alphaMul);
+
+        if (!glowPS.gameObject.activeSelf) glowPS.gameObject.SetActive(true);
+        if (!glowPS.isPlaying) glowPS.Play(true);
+    }
+
+   
+    static ParticleSystem.MinMaxGradient MultiplyAlpha(ParticleSystem.MinMaxGradient src, float mul)
+    {
+        switch (src.mode)
+        {
+            case ParticleSystemGradientMode.Color:
+                var c = src.color; c.a = Mathf.Clamp01(c.a * mul);
+                return new ParticleSystem.MinMaxGradient(c);
+
+            case ParticleSystemGradientMode.TwoColors:
+                var cMin = src.colorMin; cMin.a = Mathf.Clamp01(cMin.a * mul);
+                var cMax = src.colorMax; cMax.a = Mathf.Clamp01(cMax.a * mul);
+                var two = new ParticleSystem.MinMaxGradient(cMin, cMax) { mode = ParticleSystemGradientMode.TwoColors };
+                return two;
+
+            case ParticleSystemGradientMode.Gradient:
+                var g = Clone(src.gradient); ScaleAlpha(ref g, mul);
+                return new ParticleSystem.MinMaxGradient(g);
+
+            case ParticleSystemGradientMode.TwoGradients:
+                var gMin = Clone(src.gradientMin); ScaleAlpha(ref gMin, mul);
+                var gMax = Clone(src.gradientMax); ScaleAlpha(ref gMax, mul);
+                var tg = new ParticleSystem.MinMaxGradient(gMin, gMax) { mode = ParticleSystemGradientMode.TwoGradients };
+                return tg;
+
+            default:
+                return src;
+        }
+    }
+
+    static Gradient Clone(Gradient src)
+    {
+        if (src == null) return new Gradient();
+        return new Gradient { colorKeys = src.colorKeys, alphaKeys = src.alphaKeys, mode = src.mode };
+    }
+
+    static void ScaleAlpha(ref Gradient g, float mul)
+    {
+        if (g == null) return;
+        var a = g.alphaKeys;
+        for (int i = 0; i < a.Length; i++) a[i].alpha = Mathf.Clamp01(a[i].alpha * mul);
+        g.SetKeys(g.colorKeys, a);
     }
 }
