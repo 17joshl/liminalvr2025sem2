@@ -15,11 +15,9 @@ public class FireGazePhases : MonoBehaviour
     public Collider gazeCollider;
     public float sphereCastRadius = 0.5f;
 
-    [Header("Phase Up Times (LOOKING)")]
+    [Header("Phase Timings (Seconds)")]
     public float phase1to2Time = 30f;
     public float phase2to3Time = 30f;
-
-    [Header("Phase Down Times (AWAY)")]
     public float phase3to2Time = 30f;
     public float phase2to1Time = 30f;
 
@@ -36,6 +34,7 @@ public class FireGazePhases : MonoBehaviour
     [Header("Testing / Debug")]
     public bool alwaysLooking = false;
     public bool enableKeyboardShortcuts = true;
+    public bool drawDebugRay = true;
 
     int currentPhase = 1;
     float lookTimer = 0f;
@@ -43,101 +42,28 @@ public class FireGazePhases : MonoBehaviour
 
     void Awake()
     {
-        AutoAssign();
-    }
-
-    void OnEnable()
-    {
-        AutoAssign();
-    }
-
-#if UNITY_EDITOR
-    void OnValidate()
-    {
-        UnityEditor.EditorApplication.delayCall += () =>
-        {
-            if (this == null) return;
-            AutoAssign();
-        };
-    }
-#endif
-
-    void AutoAssign()
-    {
-        // Find Camera
-        if (!playerCamera)
-        {
-            playerCamera = Camera.main;
-            if (!playerCamera)
-            {
-                var cams = FindObjectsOfType<Camera>();
-                playerCamera = cams.FirstOrDefault(c => c.CompareTag("MainCamera")) ?? cams.FirstOrDefault();
-            }
-        }
-
-        // Find FireObject (Shader)
-        var fireGo = GameObject.Find("FireObject (Shader)");
-        fireRoot = fireGo ? fireGo.transform : null;
-
-        // Find FireSizeChanger
-        fireController = null;
-        if (fireGo)
-        {
-            fireController = fireGo.GetComponent<FireSizeChanger>() ??
-                             fireGo.GetComponentInChildren<FireSizeChanger>(true) ??
-                             fireGo.GetComponentInParent<FireSizeChanger>();
-        }
-
-#if UNITY_2020_1_OR_NEWER
+        if (!playerCamera) playerCamera = Camera.main;
         if (!fireController)
-            fireController = Resources.FindObjectsOfTypeAll<FireSizeChanger>()
-                .FirstOrDefault(fc => fc && fc.name == "FireObject (Shader)") ??
-                             Resources.FindObjectsOfTypeAll<FireSizeChanger>().FirstOrDefault();
-#else
-        if (!fireController)
-            fireController = (FireSizeChanger)FindObjectOfType(typeof(FireSizeChanger));
-#endif
-
-        // Find GazeSize collider
-        if (fireRoot)
-        {
-            var gzT = fireRoot.GetComponentsInChildren<Transform>(true)
-                .FirstOrDefault(t => t.name == "GazeSize");
-            gazeCollider = gzT ? gzT.GetComponent<Collider>() : null;
-        }
-
-        // Find UI
-        if (!messageText || !timerText || !phaseText)
-        {
-            var texts = FindObjectsOfType<Text>();
-            if (!messageText)
-                messageText = texts.FirstOrDefault(t => t.name.ToLower().Contains("message"));
-            if (!timerText)
-                timerText = texts.FirstOrDefault(t => t.name.ToLower().Contains("timer"));
-            if (!phaseText)
-                phaseText = texts.FirstOrDefault(t => t.name.ToLower().Contains("phase"));
-        }
+            fireController = FindObjectOfType<FireSizeChanger>();
+        if (!fireRoot && fireController)
+            fireRoot = fireController.transform;
     }
 
     void Start()
     {
-        //Warnings
-        if (!playerCamera)
-            Debug.LogWarning("[FireGazePhases] Missing Camera. Will try Camera.main; gaze checks may fail.");
-        if (!fireRoot)
-            Debug.LogWarning("[FireGazePhases] Missing FireObject (Shader).");
-        if (!fireController)
-            Debug.LogWarning("[FireGazePhases] Missing FireSizeChanger. Phase logic won't trigger.");
-        if (!gazeCollider)
-            Debug.LogWarning("[FireGazePhases] No GazeSize collider. Using angle-only gaze check.");
-
-        SetPhase(1, "Start: Phase 1");
+        if (!playerCamera || !fireController)
+        {
+            Debug.LogError("[FireGazePhases] Missing refs — check camera or FireSizeChanger.");
+            enabled = false;
+            return;
+        }
+        SetPhase(1, "Start: Phase 1 (Fireball)");
         UpdateInfoUI();
     }
 
     void Update()
     {
-        if (!playerCamera || !fireRoot || !fireController) return;
+        if (!playerCamera || !fireController) return;
 
         if (enableKeyboardShortcuts)
         {
@@ -155,12 +81,12 @@ public class FireGazePhases : MonoBehaviour
 
             if (currentPhase == 1 && lookTimer >= phase1to2Time)
             {
-                SetPhase(2, "You have entered Phase 2");
+                SetPhase(2, "You have entered Phase 2 (Medium Fire)");
                 lookTimer = 0f;
             }
             else if (currentPhase == 2 && lookTimer >= phase2to3Time)
             {
-                SetPhase(3, "You have entered Phase 3");
+                SetPhase(3, "You have entered Phase 3 (Big Fire)");
                 lookTimer = 0f;
             }
         }
@@ -181,35 +107,51 @@ public class FireGazePhases : MonoBehaviour
             }
         }
 
+        if (drawDebugRay) DrawDebugRayVisual(looking);
         UpdateInfoUI();
     }
 
     bool IsLookingAtFire()
     {
-        if (!playerCamera || !fireRoot) return false;
+        if (!playerCamera) return false;
 
         Vector3 fwd = playerCamera.transform.forward;
         Vector3 dir = (fireRoot.position - playerCamera.transform.position).normalized;
-        if (Vector3.Angle(fwd, dir) > centerDeadZoneDegrees) return false;
+        if (Vector3.Angle(fwd, dir) > centerDeadZoneDegrees)
+            return false;
 
-        if (!gazeCollider) return true;
+        if (!gazeCollider)
+        {
+            float dist = Vector3.Distance(playerCamera.transform.position, fireRoot.position);
+            return dist <= maxRayDistance;
+        }
 
         Ray ray = new Ray(playerCamera.transform.position, fwd);
-        if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxRayDistance, hitMask, QueryTriggerInteraction.Ignore))
+        if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxRayDistance, hitMask, QueryTriggerInteraction.Collide))
         {
-            if (hit.collider && (hit.collider == gazeCollider || hit.collider.transform.IsChildOf(gazeCollider.transform)))
+            if (hit.collider == gazeCollider || hit.collider.transform.IsChildOf(gazeCollider.transform))
                 return true;
         }
+
         return false;
+    }
+
+    void DrawDebugRayVisual(bool hit)
+    {
+        if (!playerCamera) return;
+        Color rayColor = hit ? Color.green : Color.red;
+        Debug.DrawRay(playerCamera.transform.position, playerCamera.transform.forward * maxRayDistance, rayColor);
     }
 
     void SetPhase(int phase, string msg)
     {
         int clamped = Mathf.Clamp(phase, 1, 3);
-        if (clamped == currentPhase) { ShowMessage(msg); return; }
+        if (clamped == currentPhase) return;
+
         currentPhase = clamped;
         fireController.SetStageByNumber(currentPhase);
         ShowMessage(msg);
+        Debug.Log($"[FireGazePhases] → {msg}");
     }
 
     void ForcePhase(int phase, string msg)
@@ -225,10 +167,9 @@ public class FireGazePhases : MonoBehaviour
     {
         if (messageText)
         {
-            messageText.alignment = TextAnchor.UpperLeft;
             messageText.text = msg;
             CancelInvoke(nameof(ClearMessage));
-            Invoke(nameof(ClearMessage), 3f);
+            Invoke(nameof(ClearMessage), 2f);
         }
     }
 
@@ -241,32 +182,22 @@ public class FireGazePhases : MonoBehaviour
     {
         if (timerText)
         {
+            timerText.gameObject.SetActive(showTimer);
             if (showTimer)
             {
                 float t = Mathf.Max(lookTimer, awayTimer);
                 timerText.alignment = TextAnchor.UpperRight;
                 timerText.text = $"Timer: {t:0.0}s";
-                if (!timerText.gameObject.activeSelf) timerText.gameObject.SetActive(true);
-            }
-            else
-            {
-                timerText.text = "";
-                if (timerText.gameObject.activeSelf) timerText.gameObject.SetActive(false);
             }
         }
 
         if (phaseText)
         {
+            phaseText.gameObject.SetActive(showPhase);
             if (showPhase)
             {
                 phaseText.alignment = TextAnchor.UpperRight;
-                phaseText.text = $"Current Phase: {currentPhase}";
-                if (!phaseText.gameObject.activeSelf) phaseText.gameObject.SetActive(true);
-            }
-            else
-            {
-                phaseText.text = "";
-                if (phaseText.gameObject.activeSelf) phaseText.gameObject.SetActive(false);
+                phaseText.text = $"Phase: {currentPhase}";
             }
         }
     }
