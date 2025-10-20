@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0014529466, g: 0.0012003651, b: 0.0059132027, a: 1}
+  m_IndirectSpecularColor: {r: 0.0014342217, g: 0.0012466515, b: 0.0058256323, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -5292,7 +5292,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: New Text
+  m_Text: 
 --- !u!222 &471387065
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6116,7 +6116,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: New Text
+  m_Text: 
 --- !u!222 &553010586
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16581,7 +16581,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: New Text
+  m_Text: 
 --- !u!222 &1370527343
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16620,8 +16620,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tutorialText: {fileID: 471387064}
+  tutorialCanvas: {fileID: 0}
   displayTime: 15
   showOnStart: 1
+  vrCamera: {fileID: 0}
+  autoSetupCanvas: 1
+  displayMode: 0
+  distanceFromCamera: 2
+  heightOffset: 0
+  worldPosition: {x: 0, y: 1.5, z: 2}
+  worldRotation: {x: 0, y: 0, z: 0}
+  canvasScale: 0.003
   showVRInstructions: 1
 --- !u!4 &1547254962
 Transform:
@@ -21532,6 +21541,62 @@ MonoBehaviour:
   shrinkSpeed: 3
   smallFire: {fileID: 0}
   largeFire: {fileID: 0}
+--- !u!1 &1829143113
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1829143115}
+  - component: {fileID: 1829143114}
+  m_Layer: 0
+  m_Name: TutorialManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1829143114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1829143113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1a6408f6295b234294598d4d25a7f4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tutorialText: {fileID: 471387064}
+  tutorialCanvas: {fileID: 2038427527}
+  displayTime: 15
+  showOnStart: 1
+  vrCamera: {fileID: 963194227}
+  autoSetupCanvas: 1
+  displayMode: 0
+  distanceFromCamera: 2
+  heightOffset: 0
+  worldPosition: {x: 0, y: 1.5, z: 2}
+  worldRotation: {x: 0, y: 0, z: 0}
+  canvasScale: 0.003
+  showVRInstructions: 1
+--- !u!4 &1829143115
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1829143113}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.14, y: 0.9, z: 5.03}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1846843645
 GameObject:
   m_ObjectHideFlags: 0
@@ -31677,6 +31742,7 @@ MonoBehaviour:
   showPhase: 0
   alwaysLooking: 0
   enableKeyboardShortcuts: 0
+  drawDebugRay: 1
 --- !u!1 &2016359082
 GameObject:
   m_ObjectHideFlags: 0
