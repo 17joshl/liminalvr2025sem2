@@ -20,6 +20,9 @@ public class FireGazePhases : MonoBehaviour
     public float phase2to3Time = 30f;
     public float phase3to2Time = 30f;
     public float phase2to1Time = 30f;
+    
+    [Header("Fade Effect")]
+    public FadeToBlack fadeController;
 
     [Header("Refs")]
     public FireSizeChanger fireController;
@@ -88,6 +91,10 @@ public class FireGazePhases : MonoBehaviour
             {
                 SetPhase(3, "You have entered Phase 3 (Big Fire)");
                 lookTimer = 0f;
+                if (fadeController != null)
+                {
+                    fadeController.StartFade();
+                }
             }
         }
         else
