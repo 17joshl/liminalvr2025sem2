@@ -24997,9 +24997,9 @@ MonoBehaviour:
   playerCamera: {fileID: 2081054619}
   minVolume: 0.1
   maxVolume: 1
-  fadeSpeed: 2
+  fadeSpeed: 6
   fadeStartAngle: 45
-  fadeEndAngle: 90
+  fadeEndAngle: 60
 --- !u!1001 &1943562831
 PrefabInstance:
   m_ObjectHideFlags: 0
