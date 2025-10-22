@@ -4,7 +4,7 @@
 public class DirectionalSound : MonoBehaviour
 {
     [Header("Player Reference")]
-    public Transform playerCamera; // Usually the XR headset or main camera
+    public Transform playerCamera; 
 
     [Header("Volume Settings")]
     [Range(0f, 1f)] public float minVolume = 0f;
@@ -34,14 +34,11 @@ public class DirectionalSound : MonoBehaviour
         Vector3 toSound = (transform.position - playerCamera.position).normalized;
         Vector3 playerForward = playerCamera.forward;
 
-        // Get the angle between the player's forward direction and the sound
         float angle = Vector3.Angle(playerForward, toSound);
 
-        // Determine how much to fade based on angle range
         float t = Mathf.InverseLerp(fadeEndAngle, fadeStartAngle, angle);
         float targetVolume = Mathf.Lerp(minVolume, maxVolume, t);
 
-        // Smooth transition
         audioSource.volume = Mathf.MoveTowards(audioSource.volume, targetVolume, fadeSpeed * Time.deltaTime);
     }
 }
