@@ -35,6 +35,10 @@ public class FireGazePhases : MonoBehaviour
     public bool showTimer = true;
     public bool showPhase = true;
 
+    [Header("SFX")]
+    [SerializeField] private AudioClip[] fireClips;
+
+
     [Header("Testing / Debug")]
     public bool alwaysLooking = false;
     public bool enableKeyboardShortcuts = true;
@@ -43,6 +47,8 @@ public class FireGazePhases : MonoBehaviour
     int currentPhase = 1;
     float lookTimer = 0f;
     float awayTimer = 0f;
+
+
 
     void Awake()
     {
@@ -217,5 +223,13 @@ public class FireGazePhases : MonoBehaviour
                 phaseText.text = $"Phase: {currentPhase}";
             }
         }
+    }
+
+
+    private void PlayRandomFireSound()
+    {
+        if (fireClips == null || fireClips.Length == 0) return;
+        AudioClip randomClip = fireClips[Random.Range(0, fireClips.Length)];
+        SoundFXManager.instance.PlaySound(randomClip, gameObject.transform, 0.7f);
     }
 }
