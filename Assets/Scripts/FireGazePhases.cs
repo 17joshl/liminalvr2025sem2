@@ -78,17 +78,17 @@ public class FireGazePhases : MonoBehaviour
 
         bool looking = alwaysLooking || IsLookingAtFire();
 
-        if (looking)
+        if (looking) //If player is watching fire, reset away timer and start look timer to affect growth
         {
             awayTimer = 0f;
             lookTimer += Time.deltaTime;
 
-            if (currentPhase == 1 && lookTimer >= phase1to2Time)
+            if (currentPhase == 1 && lookTimer >= phase1to2Time) // Once look time has exceeded designated value, switch to phase 2
             {
                 SetPhase(2, "You have entered Phase 2 (Medium Fire)");
                 lookTimer = 0f;
             }
-            else if (currentPhase == 2 && lookTimer >= phase2to3Time)
+            else if (currentPhase == 2 && lookTimer >= phase2to3Time) // Once look time has exceeded designated value, switch to phase 3
             {
                 SetPhase(3, "You have entered Phase 3 (Big Fire)");
                 lookTimer = 0f;
@@ -99,23 +99,23 @@ public class FireGazePhases : MonoBehaviour
                 //}
             }
         }
-        else
+        else // If the player looks away from the fire, start the away timer to reduce flame size
         {
             lookTimer = 0f;
             awayTimer += Time.deltaTime;
 
-            if (currentPhase == 3 && awayTimer >= phase3to2Time)
+            if (currentPhase == 3 && awayTimer >= phase3to2Time) // Once away time has exceeded designated value, switch to phase 2 if phase was 3
             {
                 SetPhase(2, "Shrinking to Phase 2");
                 awayTimer = 0f;
             }
-            else if (currentPhase == 2 && awayTimer >= phase2to1Time)
+            else if (currentPhase == 2 && awayTimer >= phase2to1Time) // Once away time has exceeded designated value, switch to phase 1 if phase was 2
             {
                 SetPhase(1, "Shrinking to Phase 1");
                 awayTimer = 0f;
             }
         }
-        if (currentPhase == 3)
+        if (currentPhase == 3) // After phase 3 begins, fade to black after a few seconds (to be changed to be conditional on if player continues looking or not)
         {
             timeUntilFade -= Time.deltaTime;
             if (timeUntilFade <=0 && fadeController != null)
