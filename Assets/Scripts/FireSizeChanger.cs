@@ -8,7 +8,7 @@ public class FireSizeChanger : MonoBehaviour
     public Transform stylizedBackingFlames;
     public Transform redFlames;
 
-    public ParticleSystem glowPS;
+    /*public ParticleSystem glowPS;
 
     [Header("Glow – Emission (rateOverTime)")]
     public float glowRateP1 = 8f;
@@ -23,7 +23,7 @@ public class FireSizeChanger : MonoBehaviour
     [Header("Glow – Alpha Multiplier (keeps original color)")]
     [Range(0f, 3f)] public float glowAlphaP1 = 0.6f;
     [Range(0f, 3f)] public float glowAlphaP2 = 1.0f;
-    [Range(0f, 3f)] public float glowAlphaP3 = 1.4f;
+    [Range(0f, 3f)] public float glowAlphaP3 = 1.4f; */
 
     [Header("Transition Durations (Seconds)")]
     public float transitionDurationP2 = 5.0f;  
@@ -33,7 +33,7 @@ public class FireSizeChanger : MonoBehaviour
     public bool p2UseWorldUp = false;
     public bool p3UseWorldUp = false;
 
-    ParticleSystem.MinMaxGradient _originalGlowStartColor;
+   // ParticleSystem.MinMaxGradient _originalGlowStartColor;
     bool _haveOriginalColor;
 
     Vector3 p2BaseScale = Vector3.one;
@@ -51,7 +51,7 @@ public class FireSizeChanger : MonoBehaviour
     void Awake()
     {
         AutoBind();
-        CacheGlowColor();
+       // CacheGlowColor();
 
         if (stylizedBackingFlames)
         {
@@ -84,7 +84,7 @@ public class FireSizeChanger : MonoBehaviour
         if (!Application.isPlaying)
         {
             AutoBind();
-            CacheGlowColor();
+           // CacheGlowColor();
         }
     }
 #endif
@@ -100,21 +100,21 @@ public class FireSizeChanger : MonoBehaviour
         if (!redFlames)
             redFlames = all.FirstOrDefault(t => t.name == "RedFlames");
 
-        if (!glowPS && mainFireCore)
+       /* if (!glowPS && mainFireCore)
         {
             glowPS = mainFireCore.GetComponentsInChildren<ParticleSystem>(true)
                                  .FirstOrDefault(p => p.gameObject.name == "Particle System")
                   ?? mainFireCore.GetComponentInChildren<ParticleSystem>(true);
-        }
+        } */
     }
 
-    void CacheGlowColor()
+    /*void CacheGlowColor()
     {
         _haveOriginalColor = false;
         if (!glowPS) return;
         _originalGlowStartColor = glowPS.main.startColor;
         _haveOriginalColor = true;
-    }
+    } */
 
     public void SetStageByNumber(int phase)
     {
@@ -155,7 +155,7 @@ public class FireSizeChanger : MonoBehaviour
             ));
         }
 
-        ApplyGlow(phase);
+        //ApplyGlow(phase);
     }
 
     IEnumerator SmoothScaleYAnchored(
@@ -236,7 +236,7 @@ public class FireSizeChanger : MonoBehaviour
         EnsureEnabled(t, on);
     }
 
-    void ApplyGlow(int phase)
+   /* void ApplyGlow(int phase)
     {
         if (!glowPS) return;
 
@@ -257,7 +257,7 @@ public class FireSizeChanger : MonoBehaviour
 
         if (!glowPS.gameObject.activeSelf) glowPS.gameObject.SetActive(true);
         if (!glowPS.isPlaying) glowPS.Play(true);
-    }
+    } */
 
     static ParticleSystem.MinMaxGradient MultiplyAlpha(ParticleSystem.MinMaxGradient src, float mul)
     {
