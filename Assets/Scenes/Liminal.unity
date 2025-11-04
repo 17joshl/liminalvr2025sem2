@@ -11759,7 +11759,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 03cb7e145ed623b44abe489ce0dce06f, type: 3}
-  m_PlayOnAwake: 0
+  m_PlayOnAwake: 1
   m_Volume: 0.15
   m_Pitch: 1
   Loop: 1
@@ -24901,7 +24901,7 @@ GameObject:
   - component: {fileID: 1245372350}
   - component: {fileID: 1245372351}
   m_Layer: 0
-  m_Name: LowLevelWind
+  m_Name: Wind
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -36796,9 +36796,9 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 8300000, guid: 236bb9ffd37365c4fa0388e46df75914, type: 3}
-  m_PlayOnAwake: 0
+  m_PlayOnAwake: 1
   m_Volume: 0.25
-  m_Pitch: 1
+  m_Pitch: 1.2
   Loop: 1
   Mute: 0
   Spatialize: 0
