@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0014325179, g: 0.0012448281, b: 0.005824707, a: 1}
+  m_IndirectSpecularColor: {r: 0.0014529466, g: 0.0012003651, b: 0.0059132027, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -12870,10 +12870,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41aaa04dc4d3b7c4aafc7b16d6ffc494, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mainFireCore: {fileID: 1576123689}
-  stylizedBackingFlames: {fileID: 1104772320}
-  redFlames: {fileID: 0}
+  supportingBonfire: {fileID: 2122437556}
+  mainFire: {fileID: 1576123689}
+  redFlames: {fileID: 1982942456}
   glowPS: {fileID: 283940022}
+  audioCtrl: {fileID: 1833686435}
+  p2UseWorldUp: 1
+  p3UseWorldUp: 1
   glowRateP1: 8
   glowRateP2: 24
   glowRateP3: 32
@@ -12883,10 +12886,6 @@ MonoBehaviour:
   glowAlphaP1: 0.6
   glowAlphaP2: 0.8
   glowAlphaP3: 1.4
-  transitionDurationP2: 5
-  transitionDurationP3: 5
-  p2UseWorldUp: 0
-  p3UseWorldUp: 0
 --- !u!1001 &646388119
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17774,10 +17773,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 41aaa04dc4d3b7c4aafc7b16d6ffc494, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mainFireCore: {fileID: 0}
-  stylizedBackingFlames: {fileID: 0}
+  supportingBonfire: {fileID: 0}
+  mainFire: {fileID: 0}
   redFlames: {fileID: 0}
   glowPS: {fileID: 0}
+  audioCtrl: {fileID: 1833686435}
+  p2UseWorldUp: 0
+  p3UseWorldUp: 0
   glowRateP1: 8
   glowRateP2: 18
   glowRateP3: 32
@@ -17787,10 +17789,6 @@ MonoBehaviour:
   glowAlphaP1: 0.6
   glowAlphaP2: 1
   glowAlphaP3: 1.4
-  transitionDurationP2: 5
-  transitionDurationP3: 5
-  p2UseWorldUp: 0
-  p3UseWorldUp: 0
 --- !u!4 &683200854 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8223331783523558113, guid: 0cf6233f508f46247988fea8eb22831f,
@@ -36728,6 +36726,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1833686434}
+  - component: {fileID: 1833686435}
   m_Layer: 0
   m_Name: NewSoundScape
   m_TagString: Untagged
@@ -36754,6 +36753,35 @@ Transform:
   m_Father: {fileID: 1482720065}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1833686435
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1833686433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af266f11f4e478449aa1d11800e6467a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  soundRoot: {fileID: 0}
+  wind: {fileID: 0}
+  crickets: {fileID: 0}
+  lowLevelCrackles: {fileID: 0}
+  lowLevelNearEndSynth: {fileID: 0}
+  midLevelCrackle: {fileID: 0}
+  midLevelWhoosh: {fileID: 0}
+  midLevelSynth: {fileID: 0}
+  midLevelPulseSynth: {fileID: 0}
+  largeFlameCrackle: {fileID: 0}
+  largeLevelFlameWhoosh: {fileID: 0}
+  largeFlameBuild: {fileID: 0}
+  largeFlameSynth: {fileID: 0}
+  xfade: 1.25
+  quickFade: 0.35
+  nearEndDelay: 15
+  master: 1
 --- !u!1 &1837641884
 GameObject:
   m_ObjectHideFlags: 0
@@ -52384,7 +52412,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 1a0894c3828280e4c81bfc13ee5acae1, type: 3}
   - {fileID: 8300000, guid: 2a044c802f5fd374a8bf07803ded0d2b, type: 3}
   alwaysLooking: 0
-  enableKeyboardShortcuts: 0
+  enableKeyboardShortcuts: 1
   drawDebugRay: 0
 --- !u!1 &2016359082
 GameObject:
