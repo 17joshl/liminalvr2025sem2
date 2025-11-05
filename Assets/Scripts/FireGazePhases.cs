@@ -21,13 +21,16 @@ public class FireGazePhases : MonoBehaviour
     public float phase2to3Time = 30f;
     public float phase3to2Time = 30f;
     public float phase2to1Time = 30f;
+
+    float totalLookTime = 0f;
+
     
     [Header("Fade Effect")]
     public FadeToBlack fadeController;
     public float timeUntilFade = 5f;
 
     [Header("Refs")]
-    public FireSizeChanger fireController;
+    public FireChanger fireController;
 
     [Header("UI")]
     public Text messageText;
@@ -54,7 +57,7 @@ public class FireGazePhases : MonoBehaviour
     void Awake()
     {
         if (!playerCamera) playerCamera = Camera.main;
-        if (!fireController) fireController = FindObjectOfType<FireSizeChanger>();
+        if (!fireController) fireController = FindObjectOfType<FireChanger>();
         if (!fireRoot && fireController) fireRoot = fireController.transform;
     }
 
@@ -78,18 +81,32 @@ public class FireGazePhases : MonoBehaviour
 
         bool looking = alwaysLooking || IsLookingAtFire();
 
+        fireController.SetGlowActive(looking);
+
         if (looking)
         {
             awayTimer = 0f;
             lookTimer += Time.deltaTime;
+            totalLookTime += Time.deltaTime;
 
-            if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; }
-            else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; }
+
+            if (currentPhase == 1 && totalLookTime >= phase1to2Time) {
+                SetPhase(2, "Phase 2");
+            }
+            else if (currentPhase == 2 && totalLookTime >= phase1to2Time + phase2to3Time) {
+                SetPhase(3, "Phase 3");
+            }
+
+            //if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; }
+            //else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; }
+
         }
         else
         {
             lookTimer = 0f;
             awayTimer += Time.deltaTime;
+
+            totalLookTime = Mathf.Max(0f, totalLookTime - Time.deltaTime * 0.5f); // shrink slowly
 
             if (currentPhase == 3 && awayTimer >= phase3to2Time) { SetPhase(2, "Shrink → Phase 2"); awayTimer = 0f; }
             else if (currentPhase == 2 && awayTimer >= phase2to1Time) { SetPhase(1, "Shrink → Phase 1"); awayTimer = 0f; }
@@ -103,8 +120,16 @@ public class FireGazePhases : MonoBehaviour
             }
         }
 
+
+        float totalPhaseTime = phase1to2Time + phase2to3Time;
+        float growthProgress = Mathf.Clamp01(totalLookTime / totalPhaseTime);
+        fireController.SetGrowthProgress(growthProgress);
+
+
+
         if (drawDebugRay) DrawDebugRay(looking);
         UpdateInfoUI();
+
     }
 
     bool IsLookingAtFire()
@@ -139,7 +164,7 @@ public class FireGazePhases : MonoBehaviour
         int p = Mathf.Clamp(phase, 1, 3);
         if (p == currentPhase) return;
         currentPhase = p;
-        fireController.SetStageByNumber(currentPhase);
+        //fireController.SetStageByNumber(currentPhase);
         if (messageText)
         {
             messageText.text = msg;
@@ -151,8 +176,8 @@ public class FireGazePhases : MonoBehaviour
     void ForcePhase(int phase, string msg)
     {
         currentPhase = Mathf.Clamp(phase, 1, 3);
-        fireController.SetStageByNumber(currentPhase);
-        lookTimer = 0f;
+        //fireController.SetStageByNumber(currentPhase);
+        //lookTimer = 0f;
         awayTimer = 0f;
         if (messageText)
         {
