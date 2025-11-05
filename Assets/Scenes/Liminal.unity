@@ -25533,7 +25533,7 @@ MonoBehaviour:
     scale: 1
     lightIntensity: 1.5
   glowIntensityMultiplier: 1
-  glowSmoothSpeed: 2
+  glowSmoothSpeed: 5
   split: 0.5
   smoothSpeed: 0.75
   growthCurve:
