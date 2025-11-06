@@ -24,7 +24,7 @@ public class FireGazePhases : MonoBehaviour
     
     [Header("Fade Effect")]
     public FadeToBlack fadeController;
-    public float timeUntilFade = 5f;
+    public float timeUntilFade = 30f;
 
     [Header("Refs")]
     public FireSizeChanger fireController;
@@ -166,26 +166,26 @@ public class FireGazePhases : MonoBehaviour
 
     void UpdateInfoUI()
     {
-        if (timerText)
-        {
-            timerText.gameObject.SetActive(showTimer);
-            if (showTimer)
-            {
-                float t = Mathf.Max(lookTimer, awayTimer);
-                timerText.alignment = TextAnchor.UpperRight;
-                timerText.text = $"Timer: {t:0.0}s";
-            }
-        }
+        // if (timerText)
+        // {
+        //     timerText.gameObject.SetActive(showTimer);
+        //     if (showTimer)
+        //     {
+        //         float t = Mathf.Max(lookTimer, awayTimer);
+        //         timerText.alignment = TextAnchor.UpperRight;
+        //         timerText.text = $"Timer: {t:0.0}s";
+        //     }
+        // }
 
-        if (phaseText)
-        {
-            phaseText.gameObject.SetActive(showPhase);
-            if (showPhase)
-            {
-                phaseText.alignment = TextAnchor.UpperRight;
-                phaseText.text = $"Phase: {currentPhase}";
-            }
-        }
+        // if (phaseText)
+        // {
+        //     phaseText.gameObject.SetActive(showPhase);
+        //     if (showPhase)
+        //     {
+        //         phaseText.alignment = TextAnchor.UpperRight;
+        //         phaseText.text = $"Phase: {currentPhase}";
+        //     }
+        // }
     }
 
 

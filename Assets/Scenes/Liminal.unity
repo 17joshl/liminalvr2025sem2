@@ -217,7 +217,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 25
   m_TargetDisplay: 0
 --- !u!1 &24629334 stripped
 GameObject:
@@ -1018,21 +1018,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 108367387}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &113019870
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 400000, guid: ee344ff51e4ffbb41949e122c861e46d,
-    type: 3}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1499052952}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &130830872
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11921,6 +11906,46 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1260162970322627868, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1260162969793040547, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1260162970322627870, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1260162970076492244, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1260162970076492240, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1260162970076492246, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1260162968905897398, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1260162968905897396, guid: 22276a8657744e04cba8ad0a2caf4195,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 22276a8657744e04cba8ad0a2caf4195, type: 3}
 --- !u!4 &508814737 stripped
@@ -12436,7 +12461,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &553010584
 RectTransform:
   m_ObjectHideFlags: 0
@@ -18977,7 +19002,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!81 &963194226
 AudioListener:
   m_ObjectHideFlags: 0
@@ -25452,7 +25477,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1370527341
 RectTransform:
   m_ObjectHideFlags: 0
@@ -30744,22 +30769,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1488189493}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1499052952
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 113019870}
-  m_Layer: 0
-  m_Name: Recovery GameObject (113019870)
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &1513796591
 GameObject:
   m_ObjectHideFlags: 0
@@ -31567,7 +31576,7 @@ Transform:
   - {fileID: 963194228}
   - {fileID: 42052306}
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1692404905
 PrefabInstance:
@@ -52395,12 +52404,12 @@ MonoBehaviour:
   deadZoneRadius: 0.2
   gazeCollider: {fileID: 2098054854}
   sphereCastRadius: 0.5
-  phase1to2Time: 10
-  phase2to3Time: 10
+  phase1to2Time: 30
+  phase2to3Time: 30
   phase3to2Time: 3
   phase2to1Time: 3
   fadeController: {fileID: 1547254963}
-  timeUntilFade: 5
+  timeUntilFade: 30
   fireController: {fileID: 641830965}
   messageText: {fileID: 0}
   timerText: {fileID: 1370527342}
