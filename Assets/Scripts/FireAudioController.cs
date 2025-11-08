@@ -4,6 +4,14 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+[System.Serializable]
+public struct WindVolumeProfile
+{
+    [Range(0f, 1f)] public float phase1;
+    [Range(0f, 1f)] public float phase2;
+    [Range(0f, 1f)] public float phase3;
+}
+
 public class FireAudioController : MonoBehaviour
 {
     [Header("Auto-discover root (optional)")]
@@ -35,11 +43,26 @@ public class FireAudioController : MonoBehaviour
     [SerializeField] float nearEndDelay = 15f;
     [Range(0f, 1f)] public float master = 1f;
 
+    [Header("Wind Volume Profile")]
+    public WindVolumeProfile windProfile = new WindVolumeProfile { phase1 = 1f, phase2 = 0.66f, phase3 = 0.50f };
+
+    [Header("Startup")]
+    [SerializeField, Range(0, 3)] int initialPhase = 1;
+
     readonly List<Coroutine> running = new List<Coroutine>();
     Coroutine p1NearEndRoutine;
-
-    int currentPhase = 1;
+    Coroutine transitionRoutine;
+    int currentPhase = 0;
     bool gazeOn = true;
+    bool isTransitioning = false;
+
+    public void SetWindProfile(float p1, float p2, float p3, bool applyNow = false)
+    {
+        windProfile.phase1 = Mathf.Clamp01(p1);
+        windProfile.phase2 = Mathf.Clamp01(p2);
+        windProfile.phase3 = Mathf.Clamp01(p3);
+        if (applyNow) ApplyPhaseImmediate(currentPhase == 0 ? 0 : currentPhase);
+    }
 
     void Awake()
     {
@@ -47,7 +70,13 @@ public class FireAudioController : MonoBehaviour
         AutoDiscoverIfMissing();
         PrepareSources();
         HardSilenceAllNonAmbience();
-        ApplyPhaseImmediate(1);
+        ApplyPhaseImmediate(0);
+    }
+
+    void Start()
+    {
+        if (initialPhase >= 1 && initialPhase <= 3)
+            SetPhase(initialPhase);
     }
 
     void OnEnable()
@@ -62,6 +91,7 @@ public class FireAudioController : MonoBehaviour
         AutoDiscoverIfMissing();
         PrepareSources();
         HardSilenceAllNonAmbience();
+        ApplyPhaseImmediate(currentPhase == 0 ? 0 : currentPhase);
         ApplyGazeGate(true);
     }
 
@@ -70,9 +100,10 @@ public class FireAudioController : MonoBehaviour
         StopAllCoroutines();
         running.Clear();
         p1NearEndRoutine = null;
+        transitionRoutine = null;
+        isTransitioning = false;
     }
 
-   
     public void SetPhase(int phase)
     {
         phase = Mathf.Clamp(phase, 1, 3);
@@ -80,18 +111,74 @@ public class FireAudioController : MonoBehaviour
 
         StopRunning();
 
-        float windTarget = phase == 1 ? 1f : (phase == 2 ? 0.66f : 0.33f);
-        float cricketsTarget = phase == 1 ? 1f : (phase == 2 ? 0.50f : 0f);
+        float windTarget = phase == 1 ? windProfile.phase1 : (phase == 2 ? windProfile.phase2 : windProfile.phase3);
+        float cricketsTarget = phase == 1 ? 1f : (phase == 2 ? 0.50f : 0.00f);
+
         FadeTo(wind, windTarget * master, xfade, loop: true);
         FadeTo(crickets, cricketsTarget * master, xfade, loop: true);
 
-        if (phase == 1) EnterPhase1();
-        else if (phase == 2) EnterPhase2();
-        else EnterPhase3();
-
         currentPhase = phase;
-        ApplyGazeGate();
-        Debug.Log($"[Audio] SetPhase({phase})");
+
+        if (transitionRoutine != null) StopCoroutine(transitionRoutine);
+        transitionRoutine = StartCoroutine(TransitionToPhase(phase));
+
+        Debug.Log("[Audio] SetPhase(" + phase + ")");
+    }
+
+    IEnumerator TransitionToPhase(int phase)
+    {
+        isTransitioning = true;
+
+        if (phase == 1)
+        {
+            FadeTo(lowLevelCrackles, 1f * master, xfade, loop: true);
+            FadeTo(midLevelCrackle, 0f, xfade);
+            FadeTo(midLevelSynth, 0f, xfade);
+            FadeTo(midLevelPulseSynth, 0f, xfade);
+            FadeTo(largeFlameCrackle, 0f, xfade);
+            FadeTo(largeFlameBuild, 0f, xfade);
+            FadeTo(largeFlameSynth, 0f, xfade);
+            if (p1NearEndRoutine != null) StopCoroutine(p1NearEndRoutine);
+            p1NearEndRoutine = StartCoroutine(Phase1NearEndSynthRoutine());
+        }
+        else if (phase == 2)
+        {
+            if (p1NearEndRoutine != null) { StopCoroutine(p1NearEndRoutine); p1NearEndRoutine = null; }
+            FadeTo(lowLevelNearEndSynth, 0f, xfade);
+            FadeTo(lowLevelCrackles, 0f, xfade);
+            FadeTo(midLevelCrackle, 1f * master, xfade, loop: true);
+            FadeTo(midLevelSynth, 1f * master, xfade, loop: true);
+            FadeTo(midLevelPulseSynth, 1f * master, xfade, loop: true);
+            FadeTo(largeFlameCrackle, 0f, xfade);
+            FadeTo(largeFlameBuild, 0f, xfade);
+            FadeTo(largeFlameSynth, 0f, xfade);
+            OneShot(midLevelWhoosh);
+        }
+        else
+        {
+            FadeTo(lowLevelCrackles, 0f, xfade);
+            FadeTo(midLevelCrackle, 0f, xfade);
+            FadeTo(midLevelSynth, 0f, xfade);
+            FadeTo(midLevelPulseSynth, 0f, xfade);
+            FadeTo(lowLevelNearEndSynth, 0f, xfade);
+
+            FadeTo(largeFlameCrackle, 1f * master, xfade, loop: true);
+            FadeTo(largeFlameBuild, 1f * master, xfade, loop: true);
+            FadeTo(largeFlameSynth, 1f * master, xfade, loop: true);
+
+            OneShot(largeLevelFlameWhoosh);
+        }
+
+        float t = 0f;
+        while (t < xfade)
+        {
+            t += Time.deltaTime;
+            yield return null;
+        }
+
+        isTransitioning = false;
+        ApplyGazeGate(false);
+        transitionRoutine = null;
     }
 
     public void SetGaze(bool isOn)
@@ -100,55 +187,6 @@ public class FireAudioController : MonoBehaviour
         ApplyGazeGate();
     }
 
-    
-    void EnterPhase1()
-    {
-        FadeTo(lowLevelCrackles, 1f * master, xfade, loop: true);
-
-        FadeTo(midLevelCrackle, 0f, xfade);
-        FadeTo(midLevelSynth, 0f, xfade);
-        FadeTo(midLevelPulseSynth, 0f, xfade);
-        FadeTo(largeFlameCrackle, 0f, xfade);
-        FadeTo(largeFlameBuild, 0f, xfade);
-        FadeTo(largeFlameSynth, 0f, xfade);
-
-        if (p1NearEndRoutine != null) StopCoroutine(p1NearEndRoutine);
-        p1NearEndRoutine = StartCoroutine(Phase1NearEndSynthRoutine());
-    }
-
-    void EnterPhase2()
-    {
-        if (p1NearEndRoutine != null) { StopCoroutine(p1NearEndRoutine); p1NearEndRoutine = null; }
-        FadeTo(lowLevelNearEndSynth, 0f, xfade);
-
-        FadeTo(lowLevelCrackles, 0f, xfade);
-        FadeTo(midLevelCrackle, 1f * master, xfade, loop: true);
-        FadeTo(midLevelSynth, 1f * master, xfade, loop: true);
-        FadeTo(midLevelPulseSynth, 1f * master, xfade, loop: true);
-
-        FadeTo(largeFlameCrackle, 0f, xfade);
-        FadeTo(largeFlameBuild, 0f, xfade);
-        FadeTo(largeFlameSynth, 0f, xfade);
-
-        OneShot(midLevelWhoosh);
-    }
-
-    void EnterPhase3()
-    {
-        FadeTo(lowLevelCrackles, 0f, xfade);
-        FadeTo(midLevelCrackle, 0f, xfade);
-        FadeTo(midLevelSynth, 0f, xfade);
-        FadeTo(midLevelPulseSynth, 0f, xfade);
-        FadeTo(lowLevelNearEndSynth, 0f, xfade);
-
-        FadeTo(largeFlameCrackle, 1f * master, xfade, loop: true);
-        FadeTo(largeFlameBuild, 1f * master, xfade, loop: true);
-        FadeTo(largeFlameSynth, 1f * master, xfade, loop: true);
-
-        OneShot(largeLevelFlameWhoosh);
-    }
-
-    
     void ApplyPhaseImmediate(int phase)
     {
         currentPhase = phase;
@@ -165,23 +203,43 @@ public class FireAudioController : MonoBehaviour
         EnsureLoop(midLevelWhoosh, false);
         EnsureLoop(largeLevelFlameWhoosh, false);
 
-        wind.volume = (phase == 1 ? 1f : phase == 2 ? 0.66f : 0.33f) * master;
-        crickets.volume = (phase == 1 ? 1f : phase == 2 ? 0.5f : 0f) * master;
-        SafePlay(wind);
-        SafePlay(crickets);
-
-        if (phase == 1)
+        if (phase == 0)
         {
-            if (lowLevelCrackles) { lowLevelCrackles.volume = 1f * master; SafePlay(lowLevelCrackles); }
-            if (lowLevelNearEndSynth) lowLevelNearEndSynth.volume = 0f;
+            if (wind) { wind.volume = 1f * master; SafePlay(wind); }
+            if (crickets) { crickets.volume = 1f * master; SafePlay(crickets); }
 
+            MuteStop(lowLevelCrackles);
+            MuteStop(lowLevelNearEndSynth);
             MuteStop(midLevelCrackle);
             MuteStop(midLevelSynth);
             MuteStop(midLevelPulseSynth);
             MuteStop(largeFlameCrackle);
             MuteStop(largeFlameBuild);
             MuteStop(largeFlameSynth);
+            return;
+        }
 
+        if (wind)
+        {
+            float w = (phase == 1 ? windProfile.phase1 : phase == 2 ? windProfile.phase2 : windProfile.phase3);
+            wind.volume = w * master; SafePlay(wind);
+        }
+        if (crickets)
+        {
+            float c = (phase == 1 ? 1f : phase == 2 ? 0.50f : 0.00f);
+            crickets.volume = c * master; SafePlay(crickets);
+        }
+
+        if (phase == 1)
+        {
+            if (lowLevelCrackles) { lowLevelCrackles.volume = 1f * master; SafePlay(lowLevelCrackles); }
+            if (lowLevelNearEndSynth) lowLevelNearEndSynth.volume = 0f;
+            MuteStop(midLevelCrackle);
+            MuteStop(midLevelSynth);
+            MuteStop(midLevelPulseSynth);
+            MuteStop(largeFlameCrackle);
+            MuteStop(largeFlameBuild);
+            MuteStop(largeFlameSynth);
             if (p1NearEndRoutine != null) StopCoroutine(p1NearEndRoutine);
             p1NearEndRoutine = StartCoroutine(Phase1NearEndSynthRoutine());
         }
@@ -190,7 +248,6 @@ public class FireAudioController : MonoBehaviour
             if (midLevelCrackle) { midLevelCrackle.volume = 1f * master; SafePlay(midLevelCrackle); }
             if (midLevelSynth) { midLevelSynth.volume = 1f * master; SafePlay(midLevelSynth); }
             if (midLevelPulseSynth) { midLevelPulseSynth.volume = 1f * master; SafePlay(midLevelPulseSynth); }
-
             MuteStop(lowLevelCrackles);
             MuteStop(lowLevelNearEndSynth);
             MuteStop(largeFlameCrackle);
@@ -202,7 +259,6 @@ public class FireAudioController : MonoBehaviour
             if (largeFlameCrackle) { largeFlameCrackle.volume = 1f * master; SafePlay(largeFlameCrackle); }
             if (largeFlameBuild) { largeFlameBuild.volume = 1f * master; SafePlay(largeFlameBuild); }
             if (largeFlameSynth) { largeFlameSynth.volume = 1f * master; SafePlay(largeFlameSynth); }
-
             MuteStop(lowLevelCrackles);
             MuteStop(lowLevelNearEndSynth);
             MuteStop(midLevelCrackle);
@@ -215,14 +271,25 @@ public class FireAudioController : MonoBehaviour
 
     void ApplyGazeGate(bool immediate = false)
     {
+        if (isTransitioning) return;
+
         float t = immediate ? 0f : quickFade;
-        FadeTo(midLevelSynth, gazeOn ? 1f * master : 0f, t, loop: true);
-        FadeTo(midLevelPulseSynth, gazeOn ? 1f * master : 0f, t, loop: true);
-        FadeTo(largeFlameBuild, gazeOn ? 1f * master : 0f, t, loop: true);
-        FadeTo(largeFlameSynth, gazeOn ? 1f * master : 0f, t, loop: true);
+        bool p2Active = currentPhase == 2;
+        bool p3Active = currentPhase == 3;
+
+        if (p2Active)
+        {
+            FadeTo(midLevelSynth, gazeOn ? 1f * master : 0f, t, loop: true);
+            FadeTo(midLevelPulseSynth, gazeOn ? 1f * master : 0f, t, loop: true);
+        }
+
+        if (p3Active)
+        {
+            FadeTo(largeFlameBuild, gazeOn ? 1f * master : 0f, t, loop: true);
+            FadeTo(largeFlameSynth, gazeOn ? 1f * master : 0f, t, loop: true);
+        }
     }
 
-   
     void StopRunning()
     {
         for (int i = 0; i < running.Count; i++)
@@ -290,11 +357,16 @@ public class FireAudioController : MonoBehaviour
     {
         if (!lowLevelNearEndSynth) yield break;
         lowLevelNearEndSynth.volume = 0f;
-        yield return new WaitForSeconds(nearEndDelay);
-        FadeTo(lowLevelNearEndSynth, 1f * master, xfade, loop: true);
+        float t = 0f;
+        while (t < nearEndDelay && currentPhase == 1)
+        {
+            t += Time.deltaTime;
+            yield return null;
+        }
+        if (currentPhase == 1)
+            FadeTo(lowLevelNearEndSynth, 1f * master, xfade, loop: true);
     }
 
- 
     [ContextMenu("Rebind Audio Now")]
     public void RebindAudioNow()
     {
@@ -302,6 +374,7 @@ public class FireAudioController : MonoBehaviour
         AutoDiscoverIfMissing();
         PrepareSources();
         HardSilenceAllNonAmbience();
+        ApplyPhaseImmediate(currentPhase);
         ApplyGazeGate(true);
         Debug.Log("[Audio] Rebind complete.");
     }
@@ -309,8 +382,7 @@ public class FireAudioController : MonoBehaviour
     void TryResolveSoundRoot()
     {
         if (soundRoot && soundRoot.gameObject.scene.IsValid()) return;
-
-        foreach (var t in GetAllSceneTransforms(includeInactive: true))
+        foreach (var t in GetAllSceneTransforms(true))
         {
             if (t.name == "NewSoundScape") { soundRoot = t; return; }
         }
@@ -323,46 +395,36 @@ public class FireAudioController : MonoBehaviour
         {
             TryBindFromPath(soundRoot, "OnAtAllTimes/Wind", ref wind);
             TryBindFromPath(soundRoot, "OnAtAllTimes/Crickets", ref crickets);
-
             TryBindFromPath(soundRoot, "Phase1Fire/LowLevelCrackles", ref lowLevelCrackles);
             TryBindFromPath(soundRoot, "Phase1Fire/LowLevelNearEndSynth", ref lowLevelNearEndSynth);
-
             TryBindFromPath(soundRoot, "Phase2Fire/MidLevelCrackle", ref midLevelCrackle);
             TryBindFromPath(soundRoot, "Phase2Fire/MidLevelWhoosh", ref midLevelWhoosh);
             TryBindFromPath(soundRoot, "Phase2Fire/MidLevelSynth", ref midLevelSynth);
             TryBindFromPath(soundRoot, "Phase2Fire/MidLevelPulseSynth", ref midLevelPulseSynth);
-
             TryBindFromPath(soundRoot, "Phase3Fire/LargeFlameCrackle", ref largeFlameCrackle);
             TryBindFromPath(soundRoot, "Phase3Fire/LargeLevelFlameWhoosh", ref largeLevelFlameWhoosh);
             TryBindFromPath(soundRoot, "Phase3Fire/LargeFlameBuild", ref largeFlameBuild);
             TryBindFromPath(soundRoot, "Phase3Fire/LargeFlameSynth", ref largeFlameSynth);
         }
 
-        var all = GetAllSceneAudio(includeInactive: true);
-
+        var all = GetAllSceneAudio(true);
         wind = wind ? wind : FindByAny(all, "wind");
         crickets = crickets ? crickets : FindByAny(all, "cricket");
-
         lowLevelCrackles = lowLevelCrackles ? lowLevelCrackles : FindByAny(all, "lowlevelcrackles", "low level crackle", "p1");
         lowLevelNearEndSynth = lowLevelNearEndSynth ? lowLevelNearEndSynth : FindByAny(all, "lowlevelnearendsynth", "nearend", "near end", "p1 synth");
-
         midLevelCrackle = midLevelCrackle ? midLevelCrackle : FindByAny(all, "midlevelcrackle", "mid crackle", "p2");
-        midLevelWhoosh = midLevelWhoosh ? midLevelWhoosh : FindByAny(all, "midlevelwhoosh", "p2 whoosh", "whoosh");
+        midLevelWhoosh = midLevelWhoosh ? midLevelWhoosh : FindByAny(all, "p2 whoosh", "whoosh");
         midLevelSynth = midLevelSynth ? midLevelSynth : FindByAny(all, "midlevelsynth", "mid synth", "p2 synth");
         midLevelPulseSynth = midLevelPulseSynth ? midLevelPulseSynth : FindByAny(all, "midlevelpulsesynth", "pulse", "mid pulse");
-
         largeFlameCrackle = largeFlameCrackle ? largeFlameCrackle : FindByAny(all, "largeflamecrackle", "large crackle", "p3");
-        largeLevelFlameWhoosh = largeLevelFlameWhoosh ? largeLevelFlameWhoosh : FindByAny(all, "largelevelflamewhoosh", "large flame whoosh", "p3 whoosh", "flame whoosh", "sfx");
+        largeLevelFlameWhoosh = largeLevelFlameWhoosh ? largeLevelFlameWhoosh : FindByAny(all, "large flame whoosh", "p3 whoosh", "flame whoosh", "sfx");
         largeFlameBuild = largeFlameBuild ? largeFlameBuild : FindByAny(all, "largeflamebuild", "large build", "build");
         largeFlameSynth = largeFlameSynth ? largeFlameSynth : FindByAny(all, "largeflamesynth", "large synth", "p3 synth");
 
-        Debug.Log(
-            "[Audio AutoFind] " +
-            "wind=" + NameOrDash(wind) + " crickets=" + NameOrDash(crickets) + " | " +
-            "P1 crackle=" + NameOrDash(lowLevelCrackles) + " nearEnd=" + NameOrDash(lowLevelNearEndSynth) + " | " +
-            "P2 crackle=" + NameOrDash(midLevelCrackle) + " whoosh=" + NameOrDash(midLevelWhoosh) + " synth=" + NameOrDash(midLevelSynth) + " pulse=" + NameOrDash(midLevelPulseSynth) + " | " +
-            "P3 crackle=" + NameOrDash(largeFlameCrackle) + " whoosh=" + NameOrDash(largeLevelFlameWhoosh) + " build=" + NameOrDash(largeFlameBuild) + " synth=" + NameOrDash(largeFlameSynth)
-        );
+        Debug.Log("[Audio AutoFind] wind=" + NameOrDash(wind) + " crickets=" + NameOrDash(crickets) + " | " +
+                  "P1 crackle=" + NameOrDash(lowLevelCrackles) + " nearEnd=" + NameOrDash(lowLevelNearEndSynth) + " | " +
+                  "P2 crackle=" + NameOrDash(midLevelCrackle) + " whoosh=" + NameOrDash(midLevelWhoosh) + " synth=" + NameOrDash(midLevelSynth) + " pulse=" + NameOrDash(midLevelPulseSynth) + " | " +
+                  "P3 crackle=" + NameOrDash(largeFlameCrackle) + " whoosh=" + NameOrDash(largeLevelFlameWhoosh) + " build=" + NameOrDash(largeFlameBuild) + " synth=" + NameOrDash(largeFlameSynth));
     }
 
     static string NameOrDash(Object o) => o ? o.name : "--";
@@ -370,7 +432,6 @@ public class FireAudioController : MonoBehaviour
     void TryBindFromPath(Transform root, string path, ref AudioSource slot)
     {
         if (slot || root == null) return;
-
         var t = root.Find(path);
         if (!t)
         {
@@ -389,7 +450,6 @@ public class FireAudioController : MonoBehaviour
             }
             t = cur;
         }
-
         if (t)
         {
             var a = t.GetComponent<AudioSource>() ?? t.GetComponentInChildren<AudioSource>(true);
@@ -495,17 +555,14 @@ public class FireAudioController : MonoBehaviour
         var list = new List<AudioSource>(12);
         if (lowLevelCrackles) list.Add(lowLevelCrackles);
         if (lowLevelNearEndSynth) list.Add(lowLevelNearEndSynth);
-
         if (midLevelCrackle) list.Add(midLevelCrackle);
         if (midLevelWhoosh) list.Add(midLevelWhoosh);
         if (midLevelSynth) list.Add(midLevelSynth);
         if (midLevelPulseSynth) list.Add(midLevelPulseSynth);
-
         if (largeFlameCrackle) list.Add(largeFlameCrackle);
         if (largeLevelFlameWhoosh) list.Add(largeLevelFlameWhoosh);
         if (largeFlameBuild) list.Add(largeFlameBuild);
         if (largeFlameSynth) list.Add(largeFlameSynth);
-
         return list;
     }
 }
