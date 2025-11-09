@@ -21,7 +21,7 @@ public class FireGazePhases : MonoBehaviour
     public float phase2to3Time = 30f;
     public float phase3to2Time = 30f;
     public float phase2to1Time = 30f;
-    
+
     [Header("Fade Effect")]
     public FadeToBlack fadeController;
     public float timeUntilFade = 30f;
@@ -39,7 +39,6 @@ public class FireGazePhases : MonoBehaviour
     [Header("SFX")]
     [SerializeField] private AudioClip[] fireClips;
 
-
     [Header("Testing / Debug")]
     public bool alwaysLooking = false;
     public bool enableKeyboardShortcuts = true;
@@ -48,8 +47,6 @@ public class FireGazePhases : MonoBehaviour
     int currentPhase = 1;
     float lookTimer = 0f;
     float awayTimer = 0f;
-
-
 
     void Awake()
     {
@@ -78,6 +75,9 @@ public class FireGazePhases : MonoBehaviour
 
         bool looking = alwaysLooking || IsLookingAtFire();
 
+        var audioCtrl = fireController ? fireController.audioCtrl : null;
+        if (audioCtrl) audioCtrl.SetGaze(looking);
+
         if (looking)
         {
             awayTimer = 0f;
@@ -94,10 +94,11 @@ public class FireGazePhases : MonoBehaviour
             if (currentPhase == 3 && awayTimer >= phase3to2Time) { SetPhase(2, "Shrink → Phase 2"); awayTimer = 0f; }
             else if (currentPhase == 2 && awayTimer >= phase2to1Time) { SetPhase(1, "Shrink → Phase 1"); awayTimer = 0f; }
         }
+
         if (currentPhase == 3)
         {
             timeUntilFade -= Time.deltaTime;
-            if (timeUntilFade <=0 && fadeController != null)
+            if (timeUntilFade <= 0 && fadeController != null)
             {
                 fadeController.StartFade();
             }
@@ -166,28 +167,7 @@ public class FireGazePhases : MonoBehaviour
 
     void UpdateInfoUI()
     {
-        // if (timerText)
-        // {
-        //     timerText.gameObject.SetActive(showTimer);
-        //     if (showTimer)
-        //     {
-        //         float t = Mathf.Max(lookTimer, awayTimer);
-        //         timerText.alignment = TextAnchor.UpperRight;
-        //         timerText.text = $"Timer: {t:0.0}s";
-        //     }
-        // }
-
-        // if (phaseText)
-        // {
-        //     phaseText.gameObject.SetActive(showPhase);
-        //     if (showPhase)
-        //     {
-        //         phaseText.alignment = TextAnchor.UpperRight;
-        //         phaseText.text = $"Phase: {currentPhase}";
-        //     }
-        // }
     }
-
 
     private void PlayRandomFireSound()
     {
