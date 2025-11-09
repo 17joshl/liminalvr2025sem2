@@ -39,9 +39,16 @@ public class FireAudioController : MonoBehaviour
     public float midStrumIntervalSeconds = 10f;
     public float largeStrumIntervalSeconds = 10f;
 
+    [Header("Strum Levels")]
+    [Range(0f, 1f)] public float midStrumVolume = 1f;
+    [Range(0f, 1f)] public float largeStrumVolume = 1f;
+
+    [Header("Fades")]
     [SerializeField] float xfade = 1.25f;
     [SerializeField] float quickFade = 0.35f;
     [SerializeField] float gazeFade = 0.65f;
+    [SerializeField] float strumFadeOut = 0.25f;
+
     [SerializeField] float nearEndDelay = 15f;
     [Range(0f, 1f)] public float master = 1f;
 
@@ -57,11 +64,16 @@ public class FireAudioController : MonoBehaviour
     Coroutine p2StrumRoutine;
     Coroutine p3StrumRoutine;
 
+    Coroutine midStrumFadeOutCo;
+    Coroutine largeStrumFadeOutCo;
+
     int currentPhase = 0;
     bool gazeOn = true;
     bool isTransitioning = false;
 
     Dictionary<AudioSource, float> baseVol = new Dictionary<AudioSource, float>(16);
+
+    const float oneShotFloor = 0.15f;
 
     public void SetWindProfile(float p1, float p2, float p3, bool applyNow = false)
     {
@@ -113,6 +125,8 @@ public class FireAudioController : MonoBehaviour
         transitionRoutine = null;
         p2StrumRoutine = null;
         p3StrumRoutine = null;
+        midStrumFadeOutCo = null;
+        largeStrumFadeOutCo = null;
         isTransitioning = false;
     }
 
@@ -169,7 +183,7 @@ public class FireAudioController : MonoBehaviour
             FadeTo(largeFlameSynth, 0f, xfade);
 
             OneShot(midLevelWhoosh);
-            StartP2StrumLoopIfNeeded();
+            StartP2StrumLoopIfNeeded(true);
         }
         else
         {
@@ -184,7 +198,7 @@ public class FireAudioController : MonoBehaviour
             FadeTo(largeFlameSynth, (gazeOn ? 1f : 0f) * GetBase(largeFlameSynth) * master, xfade, true);
 
             OneShot(largeLevelFlameWhoosh);
-            StartP3StrumLoopIfNeeded();
+            StartP3StrumLoopIfNeeded(true);
         }
 
         float t = 0f;
@@ -198,7 +212,17 @@ public class FireAudioController : MonoBehaviour
     public void SetGaze(bool isOn)
     {
         gazeOn = isOn;
-        if (!gazeOn) StopStrumLoops();
+        if (!gazeOn)
+        {
+            StopStrumLoops();
+            FadeOutStopStrum(midLevelStrum, ref midStrumFadeOutCo, strumFadeOut);
+            FadeOutStopStrum(largeLevelStrum, ref largeStrumFadeOutCo, strumFadeOut);
+        }
+        else
+        {
+            if (currentPhase == 2) StartP2StrumLoopIfNeeded(true);
+            else if (currentPhase == 3) StartP3StrumLoopIfNeeded(true);
+        }
         ApplyGazeGate();
     }
 
@@ -239,7 +263,7 @@ public class FireAudioController : MonoBehaviour
 
         if (wind)
         {
-            float w = (phase == 1 ? windProfile.phase1 : phase == 2 ? windProfile.phase2 : windProfile.phase3);
+            float w = (phase == 1 ? windProfile.phase1 : phase == 2 ? windProfile.phase2 : phase == 3 ? windProfile.phase3 : 1f);
             wind.volume = w * GetBase(wind) * master; SafePlay(wind);
         }
         if (crickets)
@@ -272,7 +296,7 @@ public class FireAudioController : MonoBehaviour
             MutePause(largeFlameCrackle);
             MutePause(largeFlameBuild);
             MutePause(largeFlameSynth);
-            StartP2StrumLoopIfNeeded();
+            StartP2StrumLoopIfNeeded(true);
         }
         else
         {
@@ -284,7 +308,7 @@ public class FireAudioController : MonoBehaviour
             MutePause(midLevelCrackle);
             MutePause(midLevelSynth);
             MutePause(midLevelPulseSynth);
-            StartP3StrumLoopIfNeeded();
+            StartP3StrumLoopIfNeeded(true);
         }
 
         ApplyGazeGate(true);
@@ -306,14 +330,14 @@ public class FireAudioController : MonoBehaviour
         {
             FadeTo(midLevelSynth, (gazeOn ? 1f : 0f) * GetBase(midLevelSynth) * master, t, true);
             FadeTo(midLevelPulseSynth, (gazeOn ? 1f : 0f) * GetBase(midLevelPulseSynth) * master, t, true);
-            if (gazeOn) StartP2StrumLoopIfNeeded(); else StopP2StrumLoop();
+            if (gazeOn) StartP2StrumLoopIfNeeded(false); else StopP2StrumLoop();
         }
 
         if (p3Active)
         {
             FadeTo(largeFlameBuild, (gazeOn ? 1f : 0f) * GetBase(largeFlameBuild) * master, t, true);
             FadeTo(largeFlameSynth, (gazeOn ? 1f : 0f) * GetBase(largeFlameSynth) * master, t, true);
-            if (gazeOn) StartP3StrumLoopIfNeeded(); else StopP3StrumLoop();
+            if (gazeOn) StartP3StrumLoopIfNeeded(false); else StopP3StrumLoop();
         }
     }
 
@@ -373,8 +397,10 @@ public class FireAudioController : MonoBehaviour
     {
         if (!s) return;
         s.loop = false;
-        if (s.clip) s.PlayOneShot(s.clip, master * GetBase(s));
-        else { s.volume = master * GetBase(s); s.Play(); }
+        float baseV = Mathf.Max(oneShotFloor, GetBase(s) * master);
+        s.volume = baseV;
+        if (s.clip) s.PlayOneShot(s.clip, 1f);
+        else { s.Play(); }
     }
 
     void EnsureLoop(AudioSource s, bool loop)
@@ -382,6 +408,7 @@ public class FireAudioController : MonoBehaviour
         if (!s) return;
         s.loop = loop;
         s.playOnAwake = false;
+        s.mute = false;
     }
 
     void SafePlay(AudioSource s)
@@ -619,6 +646,13 @@ public class FireAudioController : MonoBehaviour
             var s = all[i];
             if (!s) continue;
             s.playOnAwake = false;
+
+            if (s == midLevelStrum || s == largeLevelStrum)
+            {
+                if (s.isPlaying) s.Pause();
+                continue;
+            }
+
             s.volume = 0f;
             if (s.isPlaying) s.Pause();
         }
@@ -644,24 +678,30 @@ public class FireAudioController : MonoBehaviour
         return list;
     }
 
-    void StartP2StrumLoopIfNeeded()
+    void StartP2StrumLoopIfNeeded(bool restartTimer)
     {
         if (currentPhase != 2 || !gazeOn || midLevelStrum == null) { StopP2StrumLoop(); return; }
-        if (p2StrumRoutine == null)
-            p2StrumRoutine = StartCoroutine(StrumLoop(
-                midLevelStrum,
-                Mathf.Max(0.1f, midStrumIntervalSeconds),
-                () => currentPhase == 2 && gazeOn));
+        if (p2StrumRoutine != null) return;
+        float initialDelay = Mathf.Max(0.1f, midStrumIntervalSeconds);
+        p2StrumRoutine = StartCoroutine(StrumLoop(
+            midLevelStrum,
+            Mathf.Max(0.1f, midStrumIntervalSeconds),
+            () => currentPhase == 2 && gazeOn,
+            initialDelay,
+            () => Mathf.Clamp01(midStrumVolume)));
     }
 
-    void StartP3StrumLoopIfNeeded()
+    void StartP3StrumLoopIfNeeded(bool restartTimer)
     {
         if (currentPhase != 3 || !gazeOn || largeLevelStrum == null) { StopP3StrumLoop(); return; }
-        if (p3StrumRoutine == null)
-            p3StrumRoutine = StartCoroutine(StrumLoop(
-                largeLevelStrum,
-                Mathf.Max(0.1f, largeStrumIntervalSeconds),
-                () => currentPhase == 3 && gazeOn));
+        if (p3StrumRoutine != null) return;
+        float initialDelay = Mathf.Max(0.1f, largeStrumIntervalSeconds);
+        p3StrumRoutine = StartCoroutine(StrumLoop(
+            largeLevelStrum,
+            Mathf.Max(0.1f, largeStrumIntervalSeconds),
+            () => currentPhase == 3 && gazeOn,
+            initialDelay,
+            () => Mathf.Clamp01(largeStrumVolume)));
     }
 
     void StopP2StrumLoop()
@@ -682,17 +722,37 @@ public class FireAudioController : MonoBehaviour
         StopP3StrumLoop();
     }
 
-    IEnumerator StrumLoop(AudioSource src, float intervalSeconds, System.Func<bool> condition)
+    IEnumerator StrumLoop(AudioSource src, float intervalSeconds, System.Func<bool> condition, float initialDelaySeconds, System.Func<float> getVolumeMul)
     {
         float wait = Mathf.Max(0.1f, intervalSeconds);
+        float initialWait = Mathf.Max(0.1f, initialDelaySeconds);
+
+        float t0 = 0f;
+        while (t0 < initialWait && condition())
+        {
+            t0 += Time.deltaTime;
+            yield return null;
+        }
+        if (!condition()) yield break;
+
         while (condition())
         {
-            if (src && src.clip)
-                src.PlayOneShot(src.clip, master * GetBase(src));
-            else if (src)
+            float volMul = Mathf.Clamp01(getVolumeMul != null ? getVolumeMul() : 1f);
+            float baseV = Mathf.Max(oneShotFloor, GetBase(src) * master * volMul);
+
+            if (src)
             {
-                src.volume = master * GetBase(src);
-                src.Play();
+                src.volume = baseV;
+                if (!src.clip)
+                {
+                    src.Play();
+                }
+                else
+                {
+                    if (src.isPlaying) src.Stop();
+                    src.time = 0f;
+                    src.Play();
+                }
             }
 
             float t = 0f;
@@ -702,6 +762,32 @@ public class FireAudioController : MonoBehaviour
                 yield return null;
             }
             if (!condition()) break;
+        }
+    }
+
+    void FadeOutStopStrum(AudioSource s, ref Coroutine holder, float dur)
+    {
+        if (!s || !s.isPlaying) return;
+        if (holder != null) StopCoroutine(holder);
+        holder = StartCoroutine(FadeOutStopCR(s, dur));
+    }
+
+    IEnumerator FadeOutStopCR(AudioSource s, float dur)
+    {
+        float v0 = s.volume;
+        float t = 0f;
+        dur = Mathf.Max(0f, dur);
+        while (t < dur && s && s.isPlaying)
+        {
+            t += Time.deltaTime;
+            float k = dur <= 0f ? 1f : Mathf.Clamp01(t / dur);
+            s.volume = Mathf.Lerp(v0, 0f, k);
+            yield return null;
+        }
+        if (s)
+        {
+            s.volume = 0f;
+            s.Stop();
         }
     }
 }
