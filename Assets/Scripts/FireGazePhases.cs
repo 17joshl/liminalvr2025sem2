@@ -43,6 +43,13 @@ public class FireGazePhases : MonoBehaviour
 
     [Header("Refs")]
     public FireChanger fireController;
+    public FireSizeChanger fireObjectController;
+
+    public GameObject supportingBonfire;
+    public GameObject supportingGlow;
+
+
+
 
     [Header("UI")]
     public Text messageText;
@@ -103,7 +110,25 @@ public class FireGazePhases : MonoBehaviour
         bool looking = alwaysLooking || IsLookingAtFire();
         gazeActive = looking;
 
-        var audioCtrl = fireController ? fireController.audioCtrl : null;
+
+        var visual = supportingBonfire.GetComponent<SupportingFireController>();
+        var glowVisual = supportingGlow.GetComponent<SupportingGlowController>();
+
+
+        if (visual)
+        {
+            if (looking) visual.FadeIn();
+            else visual.FadeOut();
+        }
+
+        if (glowVisual)
+        {
+            if (looking) glowVisual.FadeIn();
+            else glowVisual.FadeOut();
+        }
+
+
+        var audioCtrl = fireObjectController ? fireObjectController.audioCtrl : null;
         if (audioCtrl) audioCtrl.SetGaze(looking);
 
         fireController.SetGlowActive(looking);
@@ -242,7 +267,7 @@ public class FireGazePhases : MonoBehaviour
         int p = Mathf.Clamp(phase, 1, 3);
         if (p == currentPhase) return;
         currentPhase = p;
-        if (fireController) fireController.SetStageByNumber(currentPhase);
+        //if (fireController) fireController.SetStageByNumber(currentPhase);
         if (messageText)
         {
             messageText.text = msg;
@@ -255,7 +280,7 @@ public class FireGazePhases : MonoBehaviour
     void ForcePhase(int phase, string msg)
     {
         currentPhase = Mathf.Clamp(phase, 1, 3);
-        if (fireController) fireController.SetStageByNumber(currentPhase);
+        //if (fireController) fireController.SetStageByNumber(currentPhase);
         lookTimer = 0f;
         awayTimer = 0f;
         if (messageText)
