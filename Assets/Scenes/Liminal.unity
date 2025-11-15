@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.0014325179, g: 0.0012448281, b: 0.005824707, a: 1}
+  m_IndirectSpecularColor: {r: 0.0014529466, g: 0.0012003651, b: 0.0059132027, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -18623,12 +18623,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!20 &912017344 stripped
-Camera:
-  m_CorrespondingSourceObject: {fileID: 1260162969970794154, guid: 22276a8657744e04cba8ad0a2caf4195,
-    type: 3}
-  m_PrefabInstance: {fileID: 508814736}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &929777165
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -36935,8 +36929,16 @@ MonoBehaviour:
   largeLevelFlameWhoosh: {fileID: 0}
   largeFlameBuild: {fileID: 0}
   largeFlameSynth: {fileID: 0}
+  midLevelStrum: {fileID: 0}
+  largeLevelStrum: {fileID: 0}
+  midStrumIntervalSeconds: 10
+  largeStrumIntervalSeconds: 10
+  midStrumVolume: 1
+  largeStrumVolume: 1
   xfade: 1.25
   quickFade: 0.35
+  gazeFade: 0.65
+  strumFadeOut: 0.25
   nearEndDelay: 15
   master: 1
   windProfile:
@@ -52675,34 +52677,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c40cd48e26d727c47a60ac03ae9eb354, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fireRoot: {fileID: 641830964}
-  playerCamera: {fileID: 912017344}
+  fireRoot: {fileID: 0}
+  playerCamera: {fileID: 0}
   hitMask:
     serializedVersion: 2
     m_Bits: 4294967295
   maxRayDistance: 50
+  deadzoneMode: 0
   deadZoneRadius: 0.2
-  gazeCollider: {fileID: 2098054854}
-  sphereCastRadius: 0.5
+  deadZonePixels: 180
+  deadZoneDegrees: 14
+  gazeCollider: {fileID: 0}
+  useSphereCast: 0
+  sphereCastRadius: 0.1
+  requirePhysicsHit: 1
+  anchorBiasFromBottom: 0.25
   phase1to2Time: 30
   phase2to3Time: 30
-  phase3to2Time: 3
-  phase2to1Time: 3
-  fadeController: {fileID: 1547254963}
+  phase3to2Time: 5
+  phase2to1Time: 5
+  fadeController: {fileID: 0}
   timeUntilFade: 30
-  fireController: {fileID: 641830965}
+  fireController: {fileID: 0}
   messageText: {fileID: 0}
-  timerText: {fileID: 1370527342}
-  phaseText: {fileID: 553010585}
+  timerText: {fileID: 0}
+  phaseText: {fileID: 0}
   showTimer: 1
   showPhase: 1
-  fireClips:
-  - {fileID: 8300000, guid: 42036fe27ba6707499300538a971c48b, type: 3}
-  - {fileID: 8300000, guid: 1a0894c3828280e4c81bfc13ee5acae1, type: 3}
-  - {fileID: 8300000, guid: 2a044c802f5fd374a8bf07803ded0d2b, type: 3}
+  fireClips: []
   alwaysLooking: 0
   enableKeyboardShortcuts: 1
-  drawDebugRay: 0
+  drawDebugRay: 1
+  debugLog: 0
+  gazeActive: 0
+  lastAnchorWorld: {x: 0, y: 0, z: 0}
+  lastAnchorViewport: {x: 0, y: 0}
+  lastAnchorAngleDeg: 0
 --- !u!1 &2016359082
 GameObject:
   m_ObjectHideFlags: 0
@@ -58030,6 +58040,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2098054853}
   - component: {fileID: 2098054854}
+  - component: {fileID: 2098054855}
   m_Layer: 0
   m_Name: GazeSize
   m_TagString: Untagged
@@ -58062,8 +58073,40 @@ BoxCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 2.8643594, y: 3.7434654, z: 3.089445}
-  m_Center: {x: -0.014226198, y: 1.3717327, z: 0.21775675}
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: -0.014226198, y: 0.5, z: 0.21775675}
+--- !u!114 &2098054855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2098054852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a2dbe89f82f54343bc804ab24e7804b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  campfireBase: {fileID: 0}
+  supportingBonfire: {fileID: 0}
+  mainFire: {fileID: 0}
+  redFlames: {fileID: 0}
+  useManualPerPhaseHeights: 1
+  smoothResize: 1
+  smoothTime: 0.5
+  p1Height: 0.9
+  p2Height: 1.4
+  p3Height: 2
+  p1ScaleToHeight: 1
+  p2ScaleToHeight: 1.5
+  p3ScaleToHeight: 2
+  minHeight: 1
+  maxHeight: 4
+  extraHeightOffset: 0
+  lockWidthFromInitial: 1
+  boxWidthX: 1
+  boxWidthZ: 1
+  debugLog: 0
 --- !u!4 &2122437556 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6570047192390706664, guid: a41a6f4d8f9db0d4f9145dbc5ee69767,
