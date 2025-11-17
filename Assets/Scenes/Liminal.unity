@@ -52929,14 +52929,14 @@ MonoBehaviour:
   sphereCastRadius: 0.1
   requirePhysicsHit: 1
   anchorBiasFromBottom: 0.25
-  phase1to2Time: 30
-  phase2to3Time: 30
+  phase1to2Time: 10
+  phase2to3Time: 10
   phase3to2Time: 5
   phase2to1Time: 5
   fadeController: {fileID: 0}
   timeUntilFade: 30
   fireController: {fileID: 0}
-  fireObjectController: {fileID: 0}
+  fireObjectController: {fileID: 641830965}
   supportingBonfire: {fileID: 676930037}
   supportingGlow: {fileID: 807866750}
   messageText: {fileID: 0}
@@ -58478,7 +58478,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 1.1115559e-14, z: 5.3e-43, w: 2.0681414e-14}
+  m_BoundingSphereOverride: {x: 9.1837e-41, y: -1.375e-42, z: 1.02e-43, w: NaN}
   m_UseBoundingSphereOverride: 0
   m_ShadowRadius: 2
   m_ShadowAngle: 0
