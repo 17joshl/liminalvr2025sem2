@@ -40,5 +40,7 @@ public class FadeToBlack : MonoBehaviour
 
         c.a = 1f;
         fadeImage.color = c;
+
+        Application.Quit();
     }
 }
