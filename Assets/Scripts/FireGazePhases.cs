@@ -108,8 +108,8 @@ public class FireGazePhases : MonoBehaviour
             awayTimer = 0f;
             lookTimer += Time.deltaTime;
 
-            if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; }
-            else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; }
+            if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; timeUntilFade = 30f; }
+            else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; timeUntilFade = 30f; }
         }
         else
         {
@@ -120,11 +120,12 @@ public class FireGazePhases : MonoBehaviour
             else if (currentPhase == 2 && awayTimer >= phase2to1Time) { SetPhase(1, "Shrink → Phase 1"); awayTimer = 0f; }
         }
 
-        if (currentPhase == 3)
+        if (currentPhase == 3 && looking)
         {
             timeUntilFade -= Time.deltaTime;
-            if (timeUntilFade <= 0 && fadeController != null)
+            if (timeUntilFade <= 0 && fadeController != null) {
                 fadeController.StartFade();
+            }
         }
 
         if (drawDebugRay) DrawDebugRay(looking);
