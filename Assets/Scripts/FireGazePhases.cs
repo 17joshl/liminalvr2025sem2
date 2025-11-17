@@ -140,18 +140,18 @@ public class FireGazePhases : MonoBehaviour
             totalLookTime += Time.deltaTime;
 
 
-            if (currentPhase == 1 && totalLookTime >= phase1to2Time) {
+           /* if (currentPhase == 1 && totalLookTime >= phase1to2Time) {
                 SetPhase(2, "Phase 2");
             }
             else if (currentPhase == 2 && totalLookTime >= phase1to2Time + phase2to3Time) {
                 SetPhase(3, "Phase 3");
-            }
+            } */
 
             //if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; }
             //else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; }
 
-            if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; timeUntilFade = 30f; }
-            else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; timeUntilFade = 30f; }
+            if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f;}
+            else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; timeUntilFade = 30f;}
         }
         else // If the player looks away from the fire, start the away timer to reduce flame size
         {
@@ -160,7 +160,7 @@ public class FireGazePhases : MonoBehaviour
 
             totalLookTime = Mathf.Max(0f, totalLookTime - Time.deltaTime * 0.5f); // shrink slowly
 
-            if (currentPhase == 3 && awayTimer >= phase3to2Time) { SetPhase(2, "Shrink → Phase 2"); awayTimer = 0f; }
+            if (currentPhase == 3 && awayTimer >= phase3to2Time) { SetPhase(2, "Shrink → Phase 2"); awayTimer = 0f; timeUntilFade = 30f;}
             else if (currentPhase == 2 && awayTimer >= phase2to1Time) { SetPhase(1, "Shrink → Phase 1"); awayTimer = 0f; }
         }
 
