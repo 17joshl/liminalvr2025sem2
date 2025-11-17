@@ -6,7 +6,7 @@ public class SupportingGlowController : MonoBehaviour
     public float fadeSpeed = 3f;
     public float maxEmission = 40f;   
 
-    private float targetEmission = 0f;
+    private float targetEmission = 5f;
     private float currentEmission = 0f;
 
     private bool disableAfterFade = false;
