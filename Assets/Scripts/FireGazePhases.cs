@@ -1,32 +1,55 @@
-﻿using System.Linq;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 public class FireGazePhases : MonoBehaviour
 {
+    public enum DeadzoneMode { ViewportRadius, PixelRadius, AngularDegrees }
+
     [Header("Look Target & Camera")]
     public Transform fireRoot;
     public Camera playerCamera;
     public LayerMask hitMask = ~0;
     public float maxRayDistance = 50f;
-    [Range(0f, 30f)] public float centerDeadZoneDegrees = 8f;
+
+    [Header("Dead Zone")]
+    public DeadzoneMode deadzoneMode = DeadzoneMode.ViewportRadius;
+    [Range(0.01f, 0.6f)] public float deadZoneRadius = 0.2f;   
+    public float deadZonePixels = 180f;                        
+    public float deadZoneDegrees = 14f;                        
 
     [Header("Gaze Volume")]
-    public Collider gazeCollider;
-    public float sphereCastRadius = 0.5f;
+    public Collider gazeCollider;          
+    public bool useSphereCast = false;
+    public float sphereCastRadius = 0.1f;
+
+    [Header("Gaze Filtering")]
+    public bool requirePhysicsHit = true;  
+
+    [Header("Anchor Fallback Tuning")]
+    [Range(0f, 1f)] public float anchorBiasFromBottom = 0.25f;
 
     [Header("Phase Timings (Seconds)")]
     public float phase1to2Time = 30f;
     public float phase2to3Time = 30f;
     public float phase3to2Time = 30f;
     public float phase2to1Time = 30f;
+
+    float totalLookTime = 0f;
+
     
     [Header("Fade Effect")]
     public FadeToBlack fadeController;
-    public float timeUntilFade = 5f;
+    public float timeUntilFade = 30f;
 
     [Header("Refs")]
-    public FireSizeChanger fireController;
+    public FireChanger fireController;
+    public FireSizeChanger fireObjectController;
+
+    public GameObject supportingBonfire;
+    public GameObject supportingGlow;
+
+
+
 
     [Header("UI")]
     public Text messageText;
@@ -38,36 +61,38 @@ public class FireGazePhases : MonoBehaviour
     [Header("SFX")]
     [SerializeField] private AudioClip[] fireClips;
 
-
     [Header("Testing / Debug")]
     public bool alwaysLooking = false;
     public bool enableKeyboardShortcuts = true;
     public bool drawDebugRay = true;
+    public bool debugLog = false;
 
     int currentPhase = 1;
     float lookTimer = 0f;
     float awayTimer = 0f;
 
-
+    public bool gazeActive;
+    public Vector3 lastAnchorWorld;
+    public Vector2 lastAnchorViewport;
+    public float lastAnchorAngleDeg;
 
     void Awake()
     {
         if (!playerCamera) playerCamera = Camera.main;
-        if (!fireController)
-            fireController = FindObjectOfType<FireSizeChanger>();
-        if (!fireRoot && fireController)
-            fireRoot = fireController.transform;
+        if (!fireController) fireController = FindObjectOfType<FireChanger>();
+        if (!fireRoot && fireController) fireRoot = fireController.transform;
+
+        if (!gazeCollider)
+        {
+            gazeCollider = GetComponent<Collider>();
+            if (!gazeCollider) gazeCollider = GetComponentInChildren<Collider>();
+        }
     }
 
     void Start()
     {
-        if (!playerCamera || !fireController)
-        {
-            Debug.LogError("[FireGazePhases] Missing refs — check camera or FireSizeChanger.");
-            enabled = false;
-            return;
-        }
-        SetPhase(1, "Start: Phase 1 (Fireball)");
+        if (!playerCamera || !fireController) { enabled = false; return; }
+        SetPhase(1, "Start: Phase 1");
         UpdateInfoUI();
     }
 
@@ -83,153 +108,229 @@ public class FireGazePhases : MonoBehaviour
         }
 
         bool looking = alwaysLooking || IsLookingAtFire();
+        gazeActive = looking;
+
+
+        var visual = supportingBonfire.GetComponent<SupportingFireController>();
+        var glowVisual = supportingGlow.GetComponent<SupportingGlowController>();
+
+
+        if (visual)
+        {
+            if (looking) visual.FadeIn();
+            else visual.FadeOut();
+        }
+
+        if (glowVisual)
+        {
+            if (looking) glowVisual.FadeIn();
+            else glowVisual.FadeOut();
+        }
+
+
+        var audioCtrl = fireObjectController ? fireObjectController.audioCtrl : null;
+        if (audioCtrl) audioCtrl.SetGaze(looking);
+
+        fireController.SetGlowActive(looking);
 
         if (looking) //If player is watching fire, reset away timer and start look timer to affect growth
         {
             awayTimer = 0f;
             lookTimer += Time.deltaTime;
+            totalLookTime += Time.deltaTime;
 
-            if (currentPhase == 1 && lookTimer >= phase1to2Time) // Once look time has exceeded designated value, switch to phase 2
-            {
-                SetPhase(2, "You have entered Phase 2 (Medium Fire)");
-                lookTimer = 0f;
+
+            if (currentPhase == 1 && totalLookTime >= phase1to2Time) {
+                SetPhase(2, "Phase 2");
             }
-            else if (currentPhase == 2 && lookTimer >= phase2to3Time) // Once look time has exceeded designated value, switch to phase 3
-            {
-                SetPhase(3, "You have entered Phase 3 (Big Fire)");
-                lookTimer = 0f;
-                //timeUntilFade -= Time.deltaTime;
-                //if (fadeController != null)
-                //{
-                //    fadeController.StartFade();
-                //}
+            else if (currentPhase == 2 && totalLookTime >= phase1to2Time + phase2to3Time) {
+                SetPhase(3, "Phase 3");
             }
+
+            //if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; }
+            //else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; }
+
         }
         else // If the player looks away from the fire, start the away timer to reduce flame size
         {
             lookTimer = 0f;
             awayTimer += Time.deltaTime;
 
-            if (currentPhase == 3 && awayTimer >= phase3to2Time) // Once away time has exceeded designated value, switch to phase 2 if phase was 3
-            {
-                SetPhase(2, "Shrinking to Phase 2");
-                awayTimer = 0f;
-            }
-            else if (currentPhase == 2 && awayTimer >= phase2to1Time) // Once away time has exceeded designated value, switch to phase 1 if phase was 2
-            {
-                SetPhase(1, "Shrinking to Phase 1");
-                awayTimer = 0f;
-            }
-        }
-        if (currentPhase == 3) // After phase 3 begins, fade to black after a few seconds (to be changed to be conditional on if player continues looking or not)
-        {
-            timeUntilFade -= Time.deltaTime;
-            if (timeUntilFade <=0 && fadeController != null)
-            {
-                fadeController.StartFade();
-            }
+            totalLookTime = Mathf.Max(0f, totalLookTime - Time.deltaTime * 0.5f); // shrink slowly
+
+            if (currentPhase == 3 && awayTimer >= phase3to2Time) { SetPhase(2, "Shrink → Phase 2"); awayTimer = 0f; }
+            else if (currentPhase == 2 && awayTimer >= phase2to1Time) { SetPhase(1, "Shrink → Phase 1"); awayTimer = 0f; }
         }
 
-        if (drawDebugRay) DrawDebugRayVisual(looking);
+        if (currentPhase == 3)
+        {
+            timeUntilFade -= Time.deltaTime;
+            if (timeUntilFade <= 0 && fadeController != null)
+                fadeController.StartFade();
+        }
+
+
+        float totalPhaseTime = phase1to2Time + phase2to3Time;
+        float growthProgress = Mathf.Clamp01(totalLookTime / totalPhaseTime);
+        fireController.SetGrowthProgress(growthProgress);
+
+
+
+        if (drawDebugRay) DrawDebugRay(looking);
         UpdateInfoUI();
+
     }
+
 
     bool IsLookingAtFire()
     {
         if (!playerCamera) return false;
 
-        Vector3 fwd = playerCamera.transform.forward;
-        Vector3 dir = (fireRoot.position - playerCamera.transform.position).normalized;
-        if (Vector3.Angle(fwd, dir) > centerDeadZoneDegrees)
-            return false;
+        Ray centerRay = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
         if (!gazeCollider)
         {
-            float dist = Vector3.Distance(playerCamera.transform.position, fireRoot.position);
-            return dist <= maxRayDistance;
+            if (!fireRoot) return false;
+            Vector3 vp = playerCamera.WorldToViewportPoint(fireRoot.position);
+            if (vp.z < 0f) return false;
+            Vector2 delta = new Vector2(vp.x - 0.5f, vp.y - 0.5f);
+            lastAnchorWorld = fireRoot.position;
+            lastAnchorViewport = new Vector2(vp.x, vp.y);
+            lastAnchorAngleDeg = Vector3.Angle(playerCamera.transform.forward, (fireRoot.position - playerCamera.transform.position).normalized);
+            return DeadzonePass(delta, fireRoot.position);
         }
 
-        Ray ray = new Ray(playerCamera.transform.position, fwd);
-        if (Physics.SphereCast(ray, sphereCastRadius, out RaycastHit hit, maxRayDistance, hitMask, QueryTriggerInteraction.Collide))
+        RaycastHit hit;
+        bool hitOk = useSphereCast
+            ? Physics.SphereCast(centerRay, Mathf.Max(0.0001f, sphereCastRadius), out hit, maxRayDistance, hitMask, QueryTriggerInteraction.Collide)
+            : Physics.Raycast(centerRay, out hit, maxRayDistance, hitMask, QueryTriggerInteraction.Collide);
+
+        bool hitFire = hitOk && hit.collider && IsSameOrChild(hit.collider, gazeCollider);
+
+        if (!hitFire && requirePhysicsHit)
         {
-            if (hit.collider == gazeCollider || hit.collider.transform.IsChildOf(gazeCollider.transform))
-                return true;
+            if (debugLog) Debug.Log("[Gaze] No physics hit on fire → gaze OFF");
+            return false;
         }
 
+        Vector3 anchorWorld = hitFire
+            ? hit.point
+            : ComputeBottomBiasedAnchor(gazeCollider, anchorBiasFromBottom);
+
+        lastAnchorWorld = anchorWorld;
+
+        Vector3 anchorVp3 = playerCamera.WorldToViewportPoint(anchorWorld);
+        lastAnchorViewport = new Vector2(anchorVp3.x, anchorVp3.y);
+        Vector2 deltaVp = lastAnchorViewport - new Vector2(0.5f, 0.5f);
+
+        Vector3 anchorSp3 = playerCamera.WorldToScreenPoint(anchorWorld);
+        Vector2 screenCenter = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+        Vector2 deltaPx = new Vector2(anchorSp3.x, anchorSp3.y) - screenCenter;
+
+        lastAnchorAngleDeg = Vector3.Angle(playerCamera.transform.forward, (anchorWorld - playerCamera.transform.position).normalized);
+
+        switch (deadzoneMode)
+        {
+            case DeadzoneMode.ViewportRadius: return deltaVp.magnitude <= deadZoneRadius;
+            case DeadzoneMode.PixelRadius: return deltaPx.magnitude <= deadZonePixels;
+            case DeadzoneMode.AngularDegrees: return lastAnchorAngleDeg <= deadZoneDegrees;
+        }
         return false;
     }
 
-    void DrawDebugRayVisual(bool hit)
+    bool DeadzonePass(Vector2 deltaViewport, Vector3 anchorWorld)
     {
-        if (!playerCamera) return;
-        Color rayColor = hit ? Color.green : Color.red;
-        Debug.DrawRay(playerCamera.transform.position, playerCamera.transform.forward * maxRayDistance, rayColor);
+        Vector3 toAnchor = (anchorWorld - playerCamera.transform.position).normalized;
+        lastAnchorAngleDeg = Vector3.Angle(playerCamera.transform.forward, toAnchor);
+        switch (deadzoneMode)
+        {
+            case DeadzoneMode.ViewportRadius: return deltaViewport.magnitude <= deadZoneRadius;
+            case DeadzoneMode.PixelRadius:
+                Vector3 sp = playerCamera.WorldToScreenPoint(anchorWorld);
+                Vector2 sc = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+                return (new Vector2(sp.x, sp.y) - sc).magnitude <= deadZonePixels;
+            case DeadzoneMode.AngularDegrees: return lastAnchorAngleDeg <= deadZoneDegrees;
+        }
+        return false;
     }
+
+
+    void DrawDebugRay(bool hit)
+    {
+        Color c = hit ? Color.green : Color.red;
+        Debug.DrawRay(playerCamera.transform.position, playerCamera.transform.forward * maxRayDistance, c);
+    }
+
 
     void SetPhase(int phase, string msg)
     {
-        int clamped = Mathf.Clamp(phase, 1, 3);
-        if (clamped == currentPhase) return;
-
-        currentPhase = clamped;
-        fireController.SetStageByNumber(currentPhase);
-        ShowMessage(msg);
-        Debug.Log($"[FireGazePhases] → {msg}");
-    }
-
-    void ForcePhase(int phase, string msg)
-    {
-        currentPhase = Mathf.Clamp(phase, 1, 3);
-        fireController.SetStageByNumber(currentPhase);
-        lookTimer = 0f;
-        awayTimer = 0f;
-        ShowMessage(msg);
-    }
-
-    void ShowMessage(string msg)
-    {
+        int p = Mathf.Clamp(phase, 1, 3);
+        if (p == currentPhase) return;
+        currentPhase = p;
+        //if (fireController) fireController.SetStageByNumber(currentPhase);
         if (messageText)
         {
             messageText.text = msg;
             CancelInvoke(nameof(ClearMessage));
             Invoke(nameof(ClearMessage), 2f);
         }
+        if (phaseText && showPhase) phaseText.text = $"Phase {currentPhase}";
     }
 
-    void ClearMessage()
+    void ForcePhase(int phase, string msg)
     {
-        if (messageText) messageText.text = "";
+        currentPhase = Mathf.Clamp(phase, 1, 3);
+        //if (fireController) fireController.SetStageByNumber(currentPhase);
+        lookTimer = 0f;
+        awayTimer = 0f;
+        if (messageText)
+        {
+            messageText.text = msg;
+            CancelInvoke(nameof(ClearMessage));
+            Invoke(nameof(ClearMessage), 2f);
+        }
+        if (phaseText && showPhase) phaseText.text = $"Phase {currentPhase}";
     }
+
+    void ClearMessage() { if (messageText) messageText.text = ""; }
 
     void UpdateInfoUI()
     {
-        if (timerText)
+        if (timerText && showTimer)
         {
-            timerText.gameObject.SetActive(showTimer);
-            if (showTimer)
-            {
-                float t = Mathf.Max(lookTimer, awayTimer);
-                timerText.alignment = TextAnchor.UpperRight;
-                timerText.text = $"Timer: {t:0.0}s";
-            }
+            if (gazeActive) timerText.text = $"Looking: {lookTimer:0.0}s";
+            else timerText.text = $"Away: {awayTimer:0.0}s";
         }
-
-        if (phaseText)
-        {
-            phaseText.gameObject.SetActive(showPhase);
-            if (showPhase)
-            {
-                phaseText.alignment = TextAnchor.UpperRight;
-                phaseText.text = $"Phase: {currentPhase}";
-            }
-        }
+        if (phaseText && showPhase) phaseText.text = $"Phase {currentPhase}";
     }
-
 
     private void PlayRandomFireSound()
     {
         if (fireClips == null || fireClips.Length == 0) return;
         AudioClip randomClip = fireClips[Random.Range(0, fireClips.Length)];
         SoundFXManager.instance.PlaySound(randomClip, gameObject.transform, 0.7f);
+    }
+
+
+    static bool IsSameOrChild(Collider hit, Collider targetRoot)
+    {
+        if (hit == targetRoot) return true;
+        if (!hit || !targetRoot) return false;
+        Transform t = hit.transform, root = targetRoot.transform;
+        while (t != null) { if (t == root) return true; t = t.parent; }
+        return false;
+    }
+
+    static Vector3 ComputeBottomBiasedAnchor(Collider col, float biasFromBottom)
+    {
+        if (!col) return Vector3.zero;
+        Bounds b = col.bounds;
+        float y = Mathf.Lerp(b.min.y, b.max.y, Mathf.Clamp01(biasFromBottom));
+        Vector3 bottomCenter = new Vector3(b.center.x, y, b.center.z);
+
+        Vector3 probe = bottomCenter + Vector3.up * 0.01f;
+        Vector3 closest = col.ClosestPoint(probe);
+        if ((closest - probe).sqrMagnitude < 1e-6f) return bottomCenter;
+        return closest;
     }
 }
