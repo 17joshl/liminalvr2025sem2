@@ -1,144 +1,76 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class SimpleFireTutorial : MonoBehaviour
 {
     [Header("Tutorial UI")]
-    public Text tutorialText;
-    public float displayTime = 8f;
-    public bool showOnStart = true;
+    [SerializeField] private Text tutorialText;
 
-    [Header("VR Instructions")]
-    public bool showVRInstructions = true;
+    [Header("Timing")]
+    [SerializeField] private float initialDelay = 3f; //delay before first fade-in
+    [SerializeField] private float fadeDuration = 2f; //fade in/out duration
+    [SerializeField] private float textDuration = 5f; //time text is fully visible
+    [SerializeField] private float delayBetweenLines = 0.5f;
+
+    [Header("Text Lines")]
+    [TextArea(2, 4)]
+    public string[] lines = new string[]
+    {
+        "The cool desert night brushes against your back...",
+        "In front of you, a small kindling. Stare directly at the warmth to infuse it with the power to grow.",
+        "Don't look away for an instant, or the night will take your flame's energy away from you."
+    };
 
     void Awake()
     {
-        EnsureCanvasAndText();
+        if (tutorialText == null)
+        {
+            Debug.LogError("SimpleFireTutorial: No Text component assigned in Inspector.");
+            enabled = false;
+            return;
+        }
+
+        Color c = tutorialText.color;
+        c.a = 0f;
+        tutorialText.color = c;
+        tutorialText.text = "";
+        //starts text empty/clear
     }
 
     void Start()
     {
-        if (showOnStart && tutorialText != null)
+        StartCoroutine(FadeSequence());
+    }
+
+    IEnumerator FadeSequence()
+    {
+        yield return new WaitForSeconds(initialDelay);
+
+        foreach (string line in lines)
         {
-            ShowTutorial();
+            tutorialText.text = line;
+            yield return StartCoroutine(FadeText(0f, 1f, fadeDuration)); //fade in
+            yield return new WaitForSeconds(textDuration); //text stays until fade out begins
+            yield return StartCoroutine(FadeText(1f, 0f, fadeDuration)); //fade out
+            yield return new WaitForSeconds(delayBetweenLines); //waits a bit before the next line fades in
         }
     }
 
-    void EnsureCanvasAndText()
+    IEnumerator FadeText(float start, float end, float duration)
     {
-        if (tutorialText && tutorialText.gameObject.activeInHierarchy)
+        float t = 0f;
+        Color c = tutorialText.color;
+
+        while (t < duration)
         {
-            EnableCanvasParents(tutorialText.transform);
-            return;
+            t += Time.deltaTime;
+            c.a = Mathf.Lerp(start, end, t / duration);
+            tutorialText.color = c;
+            yield return null;
         }
 
-        Canvas canvas = FindObjectOfType<Canvas>();
-        if (!canvas)
-        {
-            GameObject cgo = new GameObject("RuntimeCanvas");
-            canvas = cgo.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            cgo.AddComponent<CanvasScaler>();
-            cgo.AddComponent<GraphicRaycaster>();
-        }
-        else
-        {
-            if (!canvas.gameObject.activeSelf) canvas.gameObject.SetActive(true);
-        }
-
-        if (!tutorialText)
-        {
-            Text[] texts = canvas.GetComponentsInChildren<Text>(true);
-            foreach (var t in texts)
-            {
-                string n = t.name.ToLower();
-                if (n.Contains("tutorial"))
-                {
-                    tutorialText = t;
-                    break;
-                }
-            }
-        }
-
-        if (!tutorialText)
-        {
-            GameObject tgo = new GameObject("TutorialText");
-            tgo.transform.SetParent(canvas.transform, false);
-            tutorialText = tgo.AddComponent<Text>();
-            tutorialText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
-            tutorialText.color = Color.white;
-            tutorialText.raycastTarget = false;
-            tutorialText.alignment = TextAnchor.UpperCenter;
-            tutorialText.horizontalOverflow = HorizontalWrapMode.Wrap;
-            tutorialText.verticalOverflow = VerticalWrapMode.Overflow;
-            tutorialText.resizeTextForBestFit = true;
-            tutorialText.resizeTextMinSize = 14;
-            tutorialText.resizeTextMaxSize = 36;
-            RectTransform rt = (RectTransform)tgo.transform;
-            rt.anchorMin = new Vector2(0.5f, 1f);
-            rt.anchorMax = new Vector2(0.5f, 1f);
-            rt.pivot = new Vector2(0.5f, 1f);
-            rt.anchoredPosition = new Vector2(0f, -60f);
-            rt.sizeDelta = new Vector2(1000f, 500f);
-        }
-
-        EnableCanvasParents(tutorialText.transform);
-
-        if (tutorialText.GetComponentInParent<Canvas>().renderMode == RenderMode.WorldSpace)
-        {
-            tutorialText.GetComponentInParent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
-        }
-    }
-
-    void EnableCanvasParents(Transform t)
-    {
-        while (t != null)
-        {
-            if (!t.gameObject.activeSelf) t.gameObject.SetActive(true);
-            t = t.parent;
-        }
-    }
-
-    public void ShowTutorial()
-    {
-        string tutorialMessage = BuildTutorialMessage();
-        if (tutorialText != null)
-        {
-            tutorialText.text = tutorialMessage;
-            tutorialText.gameObject.SetActive(true);
-            if (displayTime > 0) Invoke(nameof(HideTutorial), displayTime);
-        }
-        Debug.Log(tutorialMessage);
-    }
-
-    string BuildTutorialMessage()
-    {
-        string message = "FOCUS FIRE\n\n";
-        message += "HOW IT WORKS:\n";
-        message += "• Look directly at the fire to make it GROW\n";
-        message += "• Look away from the fire to make it SHRINK\n";
-        message += "• The longer you stare, the bigger it gets!\n\n";
-        if (showVRInstructions)
-        {
-            message += "VR EXPERIENCE:\n";
-            message += "• Turn your head to look around\n";
-            message += "• Move closer or step back as needed\n";
-            message += "• Focus your gaze on the flames\n\n";
-        }
-        message += "Try it now - find the fire and stare at it!";
-        return message;
-    }
-
-    public void HideTutorial()
-    {
-        if (tutorialText != null)
-        {
-            tutorialText.gameObject.SetActive(false);
-        }
-    }
-
-    public void RestartTutorial()
-    {
-        ShowTutorial();
+        c.a = end;
+        tutorialText.color = c;
     }
 }
