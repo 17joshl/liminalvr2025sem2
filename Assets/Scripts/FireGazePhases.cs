@@ -267,7 +267,7 @@ public class FireGazePhases : MonoBehaviour
         int p = Mathf.Clamp(phase, 1, 3);
         if (p == currentPhase) return;
         currentPhase = p;
-        //if (fireController) fireController.SetStageByNumber(currentPhase);
+        if (fireObjectController) fireObjectController.SetStageByNumber(currentPhase);
         if (messageText)
         {
             messageText.text = msg;
@@ -280,7 +280,7 @@ public class FireGazePhases : MonoBehaviour
     void ForcePhase(int phase, string msg)
     {
         currentPhase = Mathf.Clamp(phase, 1, 3);
-        //if (fireController) fireController.SetStageByNumber(currentPhase);
+        if (fireObjectController) fireObjectController.SetStageByNumber(currentPhase);
         lookTimer = 0f;
         awayTimer = 0f;
         if (messageText)

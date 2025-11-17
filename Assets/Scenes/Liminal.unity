@@ -31261,6 +31261,11 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 6053670588226157279, guid: a41a6f4d8f9db0d4f9145dbc5ee69767,
+        type: 3}
+      propertyPath: ShapeModule.radius.value
+      value: 0.2
+      objectReference: {fileID: 0}
     - target: {fileID: 6570047192390706664, guid: a41a6f4d8f9db0d4f9145dbc5ee69767,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -31365,11 +31370,6 @@ PrefabInstance:
         type: 3}
       propertyPath: InitialModule.startSizeZ.minMaxState
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6053670588226157279, guid: a41a6f4d8f9db0d4f9145dbc5ee69767,
-        type: 3}
-      propertyPath: ShapeModule.radius.value
-      value: 0.2
       objectReference: {fileID: 0}
     - target: {fileID: 3748962212795296218, guid: a41a6f4d8f9db0d4f9145dbc5ee69767,
         type: 3}
