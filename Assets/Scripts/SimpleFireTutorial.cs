@@ -19,7 +19,7 @@ public class SimpleFireTutorial : MonoBehaviour
     {
         "The cool desert night brushes against your back...",
         "In front of you, a small kindling. Stare directly at the warmth to infuse it with the power to grow.",
-        "Don't look away for an instant, or the night will take your flame's energy away from you."
+        "Don't look away for an instant, or the night will steal your flame's energy away from you."
     };
 
     void Awake()
