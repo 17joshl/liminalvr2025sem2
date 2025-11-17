@@ -34,12 +34,22 @@ public class FireGazePhases : MonoBehaviour
     public float phase3to2Time = 30f;
     public float phase2to1Time = 30f;
 
+    float totalLookTime = 0f;
+
+    
     [Header("Fade Effect")]
     public FadeToBlack fadeController;
     public float timeUntilFade = 30f;
 
     [Header("Refs")]
-    public FireSizeChanger fireController;
+    public FireChanger fireController;
+    public FireSizeChanger fireObjectController;
+
+    public GameObject supportingBonfire;
+    public GameObject supportingGlow;
+
+
+
 
     [Header("UI")]
     public Text messageText;
@@ -69,7 +79,7 @@ public class FireGazePhases : MonoBehaviour
     void Awake()
     {
         if (!playerCamera) playerCamera = Camera.main;
-        if (!fireController) fireController = FindObjectOfType<FireSizeChanger>();
+        if (!fireController) fireController = FindObjectOfType<FireChanger>();
         if (!fireRoot && fireController) fireRoot = fireController.transform;
 
         if (!gazeCollider)
@@ -100,21 +110,55 @@ public class FireGazePhases : MonoBehaviour
         bool looking = alwaysLooking || IsLookingAtFire();
         gazeActive = looking;
 
-        var audioCtrl = fireController ? fireController.audioCtrl : null;
+
+        var visual = supportingBonfire.GetComponent<SupportingFireController>();
+        var glowVisual = supportingGlow.GetComponent<SupportingGlowController>();
+
+
+        if (visual)
+        {
+            if (looking) visual.FadeIn();
+            else visual.FadeOut();
+        }
+
+        if (glowVisual)
+        {
+            if (looking) glowVisual.FadeIn();
+            else glowVisual.FadeOut();
+        }
+
+
+        var audioCtrl = fireObjectController ? fireObjectController.audioCtrl : null;
         if (audioCtrl) audioCtrl.SetGaze(looking);
 
-        if (looking)
+        fireController.SetGlowActive(looking);
+
+        if (looking) //If player is watching fire, reset away timer and start look timer to affect growth
         {
             awayTimer = 0f;
             lookTimer += Time.deltaTime;
+            totalLookTime += Time.deltaTime;
+
+
+            if (currentPhase == 1 && totalLookTime >= phase1to2Time) {
+                SetPhase(2, "Phase 2");
+            }
+            else if (currentPhase == 2 && totalLookTime >= phase1to2Time + phase2to3Time) {
+                SetPhase(3, "Phase 3");
+            }
+
+            //if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; }
+            //else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; }
 
             if (currentPhase == 1 && lookTimer >= phase1to2Time) { SetPhase(2, "Phase 2"); lookTimer = 0f; timeUntilFade = 30f; }
             else if (currentPhase == 2 && lookTimer >= phase2to3Time) { SetPhase(3, "Phase 3"); lookTimer = 0f; timeUntilFade = 30f; }
         }
-        else
+        else // If the player looks away from the fire, start the away timer to reduce flame size
         {
             lookTimer = 0f;
             awayTimer += Time.deltaTime;
+
+            totalLookTime = Mathf.Max(0f, totalLookTime - Time.deltaTime * 0.5f); // shrink slowly
 
             if (currentPhase == 3 && awayTimer >= phase3to2Time) { SetPhase(2, "Shrink → Phase 2"); awayTimer = 0f; }
             else if (currentPhase == 2 && awayTimer >= phase2to1Time) { SetPhase(1, "Shrink → Phase 1"); awayTimer = 0f; }
@@ -128,8 +172,16 @@ public class FireGazePhases : MonoBehaviour
             }
         }
 
+
+        float totalPhaseTime = phase1to2Time + phase2to3Time;
+        float growthProgress = Mathf.Clamp01(totalLookTime / totalPhaseTime);
+        fireController.SetGrowthProgress(growthProgress);
+
+
+
         if (drawDebugRay) DrawDebugRay(looking);
         UpdateInfoUI();
+
     }
 
 
@@ -218,7 +270,7 @@ public class FireGazePhases : MonoBehaviour
         int p = Mathf.Clamp(phase, 1, 3);
         if (p == currentPhase) return;
         currentPhase = p;
-        if (fireController) fireController.SetStageByNumber(currentPhase);
+        //if (fireController) fireController.SetStageByNumber(currentPhase);
         if (messageText)
         {
             messageText.text = msg;
@@ -231,7 +283,7 @@ public class FireGazePhases : MonoBehaviour
     void ForcePhase(int phase, string msg)
     {
         currentPhase = Mathf.Clamp(phase, 1, 3);
-        if (fireController) fireController.SetStageByNumber(currentPhase);
+        //if (fireController) fireController.SetStageByNumber(currentPhase);
         lookTimer = 0f;
         awayTimer = 0f;
         if (messageText)
