@@ -164,10 +164,11 @@ public class FireGazePhases : MonoBehaviour
             else if (currentPhase == 2 && awayTimer >= phase2to1Time) { SetPhase(1, "Shrink → Phase 1"); awayTimer = 0f; }
         }
 
-        if (currentPhase == 3 && looking)
+       if (currentPhase == 3 && looking)
         {
             timeUntilFade -= Time.deltaTime;
             if (timeUntilFade <= 0 && fadeController != null) {
+                timeUntilFade = 9999;
                 fadeController.StartFade();
             }
         }
